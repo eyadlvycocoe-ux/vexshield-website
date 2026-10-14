@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GTA Map</title>
+  <link rel="stylesheet" href="/map/vendor/leaflet.css" />
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var style = params.get("style") || "atlas";
+      var colors = { atlas: "#0CA9D2", satellite: "#153E6A", grid: "#8F9190" };
+      var bg = colors[style] || colors.atlas;
+      document.documentElement.dataset.mapStyle = style;
+      document.documentElement.style.background = bg;
+    })();
+  </script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #0CA9D2;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+      background: inherit;
+    }
+    html[data-map-style="atlas"],
+    html[data-map-style="atlas"] body,
+    html[data-map-style="atlas"] #map,
+    html[data-map-style="atlas"] .leaflet-container {
+      background: #0CA9D2 !important;
+    }
+    html[data-map-style="satellite"],
+    html[data-map-style="satellite"] body,
+    html[data-map-style="satellite"] #map,
+    html[data-map-style="satellite"] .leaflet-container {
+      background: #153E6A !important;
+    }
+    html[data-map-style="grid"],
+    html[data-map-style="grid"] body,
+    html[data-map-style="grid"] #map,
+    html[data-map-style="grid"] .leaflet-container {
+      background: #8F9190 !important;
+    }
+    .leaflet-container,
+    .leaflet-pane,
+    .leaflet-tile-pane,
+    .leaflet-map-pane {
+      background: inherit !important;
+    }
+    html.embed body { overflow: hidden; }
+    html.embed #map { height: 100%; width: 100%; }
+    .player-marker {
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .player-marker:hover {
+      transform: scale(1.25);
+      z-index: 9999 !important;
+    }
+    .leaflet-popup-content-wrapper {
+      background: #1f2937 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    .leaflet-popup-content {
+      margin: 8px 12px !important;
+      color: #e5e7eb !important;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+    }
+    .leaflet-popup-tip { background: #1f2937 !important; border: none !important; }
+    .popup-player-name { font-size: 14px; font-weight: 600; color: #60a5fa; margin-bottom: 4px; }
+    .popup-player-id { font-size: 11px; color: #9ca3af; font-family: monospace; }
+    .popup-player-coords { font-size: 11px; color: #6b7280; margin-top: 4px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="/map/vendor/leaflet.js"></script>
+  <script src="/map/vendor/leaflet-heat.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const isEmbed = params.get("embed") === "1";
+    if (isEmbed) document.documentElement.classList.add("embed");
+
+    var STYLE_BACKGROUNDS = {
+      atlas: "#0CA9D2",
+      satellite: "#153E6A",
+      grid: "#8F9190"
+    };
+
+    function normalizeStyle(style) {
+      if (style && MAP_STYLES[style]) return style;
+      return "atlas";
+    }
+
+    function applyStyleBackground(style) {
+      var bg = STYLE_BACKGROUNDS[style] || STYLE_BACKGROUNDS.atlas;
+      document.documentElement.dataset.mapStyle = style;
+      document.documentElement.style.background = bg;
+      document.body.style.background = bg;
+      var mapEl = document.getElementById("map");
+      if (mapEl) mapEl.style.background = bg;
+      if (map && map.getContainer()) map.getContainer().style.background = bg;
+    }
+
+    const SCALE = (0.0207 + 0.0205) / 2;
+    const GTA_EXTENT = {
+      minX: -117.3 / SCALE,
+      minY: (172.8 - 256) / SCALE,
+      maxX: (256 - 117.3) / SCALE,
+      maxY: 172.8 / SCALE
+    };
+    const TILE_SIZE = 256;
+    const WORLD_WIDTH = GTA_EXTENT.maxX - GTA_EXTENT.minX;
+    const WORLD_HEIGHT = GTA_EXTENT.maxY - GTA_EXTENT.minY;
+
+    function gtaToLeaflet(x, y) {
+      var normalizedX = (x - GTA_EXTENT.minX) / WORLD_WIDTH;
+      var normalizedY = (y - GTA_EXTENT.minY) / WORLD_HEIGHT;
+      var pixelX = normalizedX * TILE_SIZE;
+      var pixelY = (1 - normalizedY) * TILE_SIZE;
+      return [pixelY, pixelX];
+    }
+
+    const MIN_ZOOM = 0;
+    const MAX_ZOOM = 5;
+    const bounds = [[0, 0], [TILE_SIZE, TILE_SIZE]];
+    const mapCenter = gtaToLeaflet(0, 0);
+
+    const GTACRS = L.extend({}, L.CRS.Simple, {
+      transformation: new L.Transformation(1, 0, 1, 0)
+    });
+
+    const MAP_STYLES = {
+      atlas: { url: "/map-tiles/atlas/{z}/{x}/{y}.jpg", ext: "jpg" },
+      satellite: { url: "/map-tiles/satelite/{z}/{x}/{y}.jpg", ext: "jpg" },
+      grid: { url: "/map-tiles/grid/{z}/{x}/{y}.png", ext: "png" }
+    };
+
+    const map = L.map("map", {
+      crs: GTACRS,
+      center: mapCenter,
+      zoom: 3,
+      minZoom: MIN_ZOOM,
+      maxZoom: MAX_ZOOM,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      dragging: true,
+      touchZoom: true,
+      boxZoom: true,
+      zoomControl: false,
+      maxBounds: bounds,
+      maxBoundsViscosity: 1.0,
+      attributionControl: false
+    });
+
+    var currentStyle = normalizeStyle(params.get("style"));
+    applyStyleBackground(currentStyle);
+    var tileLayer = L.tileLayer(MAP_STYLES[currentStyle].url, {
+      tileSize: TILE_SIZE,
+      noWrap: true,
+      bounds: bounds
+    }).addTo(map);
+
+    function setMapStyle(style) {
+      style = normalizeStyle(style);
+      if (style === currentStyle) return;
+      currentStyle = style;
+      applyStyleBackground(style);
+      map.removeLayer(tileLayer);
+      tileLayer = L.tileLayer(MAP_STYLES[style].url, {
+        tileSize: TILE_SIZE,
+        noWrap: true,
+        bounds: bounds
+      }).addTo(map);
+      map.invalidateSize(true);
+    }
+
+    var heatLayer = null;
+    var heatmapEnabled = false;
+    var lastPlayers = [];
+
+    function updateHeatmap(players) {
+      if (heatLayer) {
+        map.removeLayer(heatLayer);
+        heatLayer = null;
+      }
+      if (!heatmapEnabled || !players.length || typeof L.heatLayer !== "function") return;
+      var points = players
+        .filter(function(p) { return typeof p.x === "number" && typeof p.y === "number" && isFinite(p.x) && isFinite(p.y); })
+        .map(function(p) {
+          var pos = gtaToLeaflet(p.x, p.y);
+          return [pos[0], pos[1], 0.8];
+        });
+      if (!points.length) return;
+      heatLayer = L.heatLayer(points, {
+        radius: 30,
+        blur: 30,
+        maxZoom: 18,
+        minOpacity: 0.6,
+        gradient: { 0.2: "blue", 0.4: "cyan", 0.6: "lime", 0.8: "yellow", 1.0: "red" }
+      });
+      heatLayer.addTo(map);
+    }
+
+    function setHeatmap(enabled) {
+      heatmapEnabled = !!enabled;
+      updateHeatmap(lastPlayers);
+    }
+
+    function getMarkerColor(player) {
+      if (player.admin) return "#ff6b35";
+      if (player.inVehicle) return "#6366f1";
+      if ((player.threatScore || 0) >= 60) return "#ef4444";
+      return "#22c55e";
+    }
+
+    function getMarkerSymbol(player) {
+      if (player.admin) return "🛡️";
+      if (player.inVehicle) return "🚗";
+      return "🧑";
+    }
+
+    function createMarkerIcon(player) {
+      var color = getMarkerColor(player);
+      var symbol = getMarkerSymbol(player);
+      return L.divIcon({
+        html: '<div class="player-marker" style="background-color:' + color + ';width:28px;height:28px;">' + symbol + '</div>',
+        className: "",
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -16]
+      });
+    }
+
+    function createPopupContent(p) {
+      var coords = p.x !== undefined ? "X: " + p.x.toFixed(1) + " | Y: " + p.y.toFixed(1) : "";
+      return '<div class="popup-player-name">' + (p.name || "Unknown") + '</div>' +
+             '<div class="popup-player-id">ID: ' + p.id + '</div>' +
+             (coords ? '<div class="popup-player-coords">' + coords + '</div>' : "");
+    }
+
+    var markers = {};
+    var focusRing = null;
+
+    function updatePlayerMarkers(players) {
+      lastPlayers = players || [];
+      updateHeatmap(lastPlayers);
+
+      var playerIds = {};
+      players.forEach(function(p) { playerIds[p.id] = true; });
+
+      Object.keys(markers).forEach(function(id) {
+        if (!playerIds[id]) {
+          map.removeLayer(markers[id]);
+          delete markers[id];
+        }
+      });
+
+      players.forEach(function(p) {
+        if (typeof p.x !== "number" || typeof p.y !== "number" || !isFinite(p.x) || !isFinite(p.y)) return;
+        var pos = gtaToLeaflet(p.x, p.y);
+        var icon = createMarkerIcon(p);
+        var popupHtml = createPopupContent(p);
+
+        if (markers[p.id]) {
+          markers[p.id].setLatLng(pos);
+          markers[p.id].setIcon(icon);
+          markers[p.id].setPopupContent(popupHtml);
+        } else {
+          markers[p.id] = L.marker(pos, { icon: icon })
+            .addTo(map)
+            .bindPopup(popupHtml);
+          markers[p.id].on("click", function() {
+            window.parent.postMessage({ type: "playerSelected", player: p }, "*");
+          });
+        }
+      });
+    }
+
+    window.addEventListener("message", function(e) {
+      if (!e.data || !e.data.type) return;
+
+      if (e.data.type === "setMapStyle") {
+        setMapStyle(e.data.style || "atlas");
+        return;
+      }
+
+      if (e.data.type === "setHeatmap") {
+        setHeatmap(!!e.data.enabled);
+        return;
+      }
+
+      if (e.data.type === "focusPlayer") {
+        var fp = e.data.player;
+        if (!fp || typeof fp.x !== "number" || typeof fp.y !== "number") return;
+        var focusPos = gtaToLeaflet(fp.x, fp.y);
+        map.flyTo(focusPos, Math.max(map.getZoom(), 4), { duration: 0.5 });
+        if (focusRing) { map.removeLayer(focusRing); focusRing = null; }
+        focusRing = L.circleMarker(focusPos, {
+          radius: 10, color: "#ef4444", weight: 2,
+          fillColor: "#ef4444", fillOpacity: 0.25
+        }).addTo(map);
+        return;
+      }
+
+      if (e.data.type === "updatePlayers") {
+        updatePlayerMarkers(e.data.players || []);
+      }
+    });
+
+    window.parent.postMessage({ type: "mapReady" }, "*");
+  </script>
+</body>
+</html>

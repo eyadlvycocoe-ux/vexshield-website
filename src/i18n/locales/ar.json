@@ -1,0 +1,679 @@
+{
+  "common": {
+    "brand": "VexShield",
+    "beta": "V1",
+    "languageAria": "اختر اللغة",
+    "cancel": "إلغاء",
+    "copy": "نسخ"
+  },
+  "languages": {
+    "en": "English",
+    "ar": "العربية",
+    "hu": "Magyar",
+    "nl": "Nederlands",
+    "ko": "한국어",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch",
+    "it": "Italiano",
+    "pt": "Português",
+    "cs": "Čeština"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "features": "الميزات",
+    "pricing": "الأسعار",
+    "faqs": "الأسئلة الشائعة",
+    "api": "التوثيق",
+    "partners": "الشركاء الرسميون"
+  },
+  "auth": {
+    "logoutSuccess": "تم الخروج بنجاح",
+    "myServers": "خوادمي",
+    "logout": "تسجيل خروج",
+    "signIn": "تسجيل دخول"
+  },
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "download": "تحميل",
+    "players": "اللاعبين",
+    "search": "بحث",
+    "map": "الخريطة",
+    "liveView": "بث مباشر",
+    "warns": "تحذيرات",
+    "kicks": "طرد",
+    "bans": "حظر",
+    "blacklistDetections": "القائمة السوداء",
+    "airscanner": "AirScanner",
+    "licenseKeys": "تراخيص",
+    "checkResults": "النتائج",
+    "console": "الكونسول",
+    "resources": "الموارد",
+    "admins": "المدراء",
+    "activityLog": "السجلات",
+    "settings": "الإعدادات",
+    "botManager": "إدارة البوت",
+    "moderation": "الإشراف",
+    "scanner": "الفحص",
+    "pcchecker": "فاحص الجهاز",
+    "management": "الإدارة",
+    "analytics": "التحليلات",
+    "graph": "الرسم البياني",
+    "list": "القائمة",
+    "trustScore": "درجة الثقة",
+    "myPins": "رموزي",
+    "serverPanel": "لوحة السيرفر",
+    "whitelistAdmin": "إدارة القائمة البيضاء",
+    "users": "المستخدمون",
+    "servers": "السيرفرات",
+    "demoMode": "وضع التجربة",
+    "notConnected": "غير متصل",
+    "supportDiscord": "ديسكورد الدعم",
+    "obfuscationScripts": "سكربتات التشفير"
+  },
+  "hero": {
+    "badge": "حل متقدم لمكافحة الغش",
+    "titleLine1": "احمِ خادمك",
+    "titleHighlight": "كالحصن المنيع",
+    "description": "الحزمة النهائية لمكافحة الغش والإدارة لخوادم FiveM. يحمي VexShield من قوائم المودات، والأبواب الخلفية، وهجمات الإغراق مع أداء سلس تماماً.",
+    "interactiveDemo": "تجربة تفاعلية",
+    "pricingBtn": "عرض الأسعار",
+    "partnersLabel": "موثوق به لدى كبار الخوادم:",
+    "dashboardAlt": "معاينة لوحة تحكم VexShield"
+  },
+  "stats": {
+    "servers": "خوادم نشطة",
+    "bans": "حظر صادر"
+  },
+  "revolution": {
+    "verticalLogoAlt": "شعار ريفولوشن",
+    "titleLine1": "انضم إلى ثورة",
+    "titleLine2": "الحماية",
+    "yearExperience": "سنوات خبرة في الأمان",
+    "serversProtected": "خادم محمي حول العالم",
+    "bansIssued": "حظر صادر من نظامنا",
+    "getStarted": "ابدأ الآن",
+    "joinDiscord": "انضم إلى الديسكورد"
+  },
+  "features": {
+    "sectionLabel": "الحماية الأساسية",
+    "sectionTitle": "كل ما تحتاجه لتأمين مجتمعك",
+    "sectionSubtitle": "أدوات قوية صممها أصحاب خوادم لأجل أصحاب الخوادم. اوقف الغشاشين واحمِ استثمارك بكل سهولة.",
+    "spotlightBadge": "محرك مكافحة الغش",
+    "spotlightTitle": "أوقف 99% من قوائم المودات فوراً",
+    "spotlightDesc": "يعمل محركنا على العميل والخادم للكشف عن الحقن البرمجي غير المصرح به. لا يتطلب إعدادات معقدة، فقط ثبته واستمتع براحة البال.",
+    "spotlightItem1": "فحص التواقيع في الوقت الفعلي لأشهر قوائم الغش.",
+    "spotlightItem2": "حظر تلقائي عالمي مبني على الهوية الصلبة للجهاز (HWID).",
+    "tryDemo": "جرب العرض التفاعلي",
+    "iframeTitle": "عرض VexShield",
+    "watchYoutube": "شاهد العرض على يوتيوب"
+  },
+  "featureCategories": [
+    {
+      "title": "مكافحة غش شاملة",
+      "description": "يوقف تقريباً جميع قوائم الغش والمنفذات في السوق.",
+      "items": [
+        "كشف التواقيع",
+        "فحص الذاكرة",
+        "حظر المنفذات"
+      ]
+    },
+    {
+      "title": "القائمة السوداء العالمية",
+      "description": "قاعدة بيانات مشتركة للغشاشين الموثقين عبر جميع الخوادم.",
+      "items": [
+        "توثيق HWID",
+        "حظر عبر الخوادم",
+        "تحديثات فورية"
+      ]
+    },
+    {
+      "title": "تحسين الأداء",
+      "description": "تأثير ضئيل جداً على موارد الخادم والعميل.",
+      "items": [
+        "استهلاك منخفض للمعالج",
+        "فحوصات غير متزامنة",
+        "أداء أصلي"
+      ]
+    },
+    {
+      "title": "مجموعة الإدارة",
+      "description": "لوحة تحكم كاملة لإدارة اللاعبين والحظر والطرد.",
+      "items": [
+        "كونسول مباشر",
+        "سجل اللاعبين",
+        "مدير الموارد"
+      ]
+    },
+    {
+      "title": "فحص متقدم",
+      "description": "فحص عميق للأبواب الخلفية المخفية في مواردك.",
+      "items": [
+        "الباحث AirScanner",
+        "فاحص الجهاز",
+        "كشف الأنماط"
+      ]
+    }
+  ],
+  "airPcChecker": {
+    "sectionLabel": "توثيق الجهاز",
+    "title": "وثق اللاعبين مع AirPC Checker",
+    "description": "فحص عميق لجهاز اللاعب بحثاً عن برامج الغش والسكربتات وآثار قوائم المودات المستخدمة سابقاً. الأداة المثالية لتجارب الخوادم التنافسية.",
+    "bullet1": "فحص العمليات المخفية ومفاتيح الريجستري.",
+    "bullet2": "كشف آثار قوائم المودات المحذوفة.",
+    "bullet3": "تسجيل كامل لمعرفات العتاد (Hardware IDs).",
+    "productCaption": "واجهة AirPC Checker",
+    "productAlt": "معاينة واجهة فاحص الجهاز"
+  },
+  "airEye": {
+    "sectionLabel": "تكامل الديسكورد",
+    "title": "راقب خادمك من الديسكورد",
+    "description": "Air Eye هو بوت ديسكورد قوي يتزامن مع خادم اللعبة لتوفير الحالة المباشرة وسجلات الحظر وتنبيهات القائمة السوداء مباشرة لقنوات طاقم العمل.",
+    "bullet1": "تلقي تنبيهات فورية لكشف القائمة السوداء.",
+    "bullet2": "البحث عن سجل اللاعبين عبر أوامر الديسكورد.",
+    "bullet3": "مزامنة حظر الخادم مع رتب الديسكورد.",
+    "addToDiscord": "إضافة إلى الديسكورد",
+    "productCaption": "تنبيهات Air Eye في الديسكورد",
+    "productAlt": "معاينة بوت الديسكورد"
+  },
+  "airScanner": {
+    "bundleIntro": "جزء من حزمة الأمان المميز لدينا، مصمم ليجد ما يغفل عنه الآخرون.",
+    "sectionLabel": "تحليل الموارد",
+    "title": "نظف مواردك مع AirScanner",
+    "description": "معظم الموارد المجانية تحتوي على أبواب خلفية مخفية. يقوم AirScanner تلقائياً بفحص ملفاتك بحثاً عن أكواد مشفرة ومشغلات عن بعد وأنماط خبيثة.",
+    "bullet1": "تحليل عميق للأكواد لجميع ملفات .lua و .js.",
+    "bullet2": "كشف التحميل عن بعد للسكربتات الخارجية.",
+    "bullet3": "تحديد مشغلات الإدارة المخفية في السكربتات المجانية.",
+    "productCaption": "عرض كشف AirScanner",
+    "productAlt": "واجهة الفحص",
+    "resultsCaption": "نتائج فحص مفصلة",
+    "resultsAlt": "معاينة نتائج الفحص"
+  },
+  "feedback": {
+    "clientsTitle": "ماذا يقول عملاؤنا",
+    "clientsSubtitle": "موثوق به من قبل أكثر من 100 صاحب خادم محترف حول العالم.",
+    "emptyState": "كن أول من يترك تقييماً!",
+    "memberFeedback": "عضو موثق"
+  },
+  "feedbackForm": {
+    "title": "شارك تجربتك",
+    "loginPrompt": "يجب تسجيل الدخول لتقديم تقييم.",
+    "login": "تسجيل الدخول عبر ديسكورد",
+    "ownersOnly": "فقط أصحاب الخوادم المرخصة يمكنهم تقديم تقييم.",
+    "submittingAs": "يتم التقديم كـ",
+    "placeholder": "اكتب تقييمك هنا... (10 أحرف كحد أدنى)",
+    "rating": "تقييمك:",
+    "submitting": "جاري التقديم...",
+    "submit": "إرسال التقييم"
+  },
+  "pricing": {
+    "homeSectionTitle": "اختر حمايتك",
+    "mostPopular": "الأكثر شيوعاً",
+    "purchase": "اطلب الآن",
+    "noPlansFound": "لا توجد خطط أسعار حالياً.",
+    "helpTitle": "حول باقات الأسعار لدينا"
+  },
+  "pcCheckerTrial": {
+    "badge": "تجربة مجانية",
+    "title": "AirPC Checker (7 أيام)",
+    "subtitle": "جرّب PC Checker فقط — سيرفر مجاني واحد لكل حساب",
+    "price": "مجاني",
+    "duration": "7 أيام",
+    "feature1": "7 أيام وصول لـ PC Checker",
+    "feature2": "اسم السيرفر: free 7 dayes pc checker",
+    "feature3": "تراخيص PC Checker ونتائج الفحص",
+    "feature4": "تجربة واحدة لكل حساب Discord",
+    "claim": "ابدأ التجربة المجانية",
+    "claiming": "جاري إنشاء السيرفر…",
+    "claimSuccess": "سيرفر PC Checker المجاني جاهز. افتح خوادمي للإعداد.",
+    "claimFailed": "تعذّر بدء التجربة المجانية",
+    "signIn": "سجّل الدخول للمطالبة",
+    "alreadyUsed": "استخدمت التجربة المجانية مسبقاً على هذا الحساب",
+    "usedHint": "هذا الحساب استخدم تجربة PC Checker المجانية مسبقاً.",
+    "openServers": "فتح خوادمي"
+  },
+  "footer": {
+    "tagline": "الجيل القادم من أمان وإدارة خوادم FiveM. احمِ استثمارك بأحدث تقنيات مكافحة الغش.",
+    "navigation": "التنقل",
+    "documentation": "التوثيق",
+    "terms": "الشروط",
+    "privacy": "الخصوصية",
+    "refund": "الاسترجاع",
+    "support": "الدعم/الاعتراضات",
+    "legal": "قانوني",
+    "airEye": "نظام Air Eye",
+    "copyright": "© {{year}} VexShield. جميع الحقوق محفوظة."
+  },
+  "profile": {
+    "settings": "إحصائيات الملف",
+    "displayName": "الاسم المعروض",
+    "bio": "السيرة الذاتية",
+    "save": "حفظ التغييرات",
+    "saving": "جاري الحفظ...",
+    "wallet": "المحفظة",
+    "redeem": "استرداد كود",
+    "sessions": "الجلسات الأخيرة",
+    "loggedAt": "تسجيل الدخول في",
+    "device": "الجهاز",
+    "location": "الموقع"
+  },
+  "support": {
+    "title": "مركز الدعم",
+    "subtitle": "الدعم الفني والاعتراضات",
+    "category": "الفئة",
+    "subject": "الموضوع",
+    "message": "الرسالة",
+    "submit": "إرسال",
+    "submitting": "جاري الإرسال...",
+    "appealAlert": "مخصص للمستخدمين المضافين للقائمة السوداء.",
+    "blacklistAppeal": "اعتراض",
+    "buyInfo": "مساعدة في الدفع",
+    "generalSupport": "دعم عام"
+  },
+  "addFunds": {
+    "title": "إضافة رصيد",
+    "subtitle": "اشحن رصيد محفظتك",
+    "currentBalance": "الرصيد الحالي",
+    "amount": "المبلغ",
+    "selectAmount": "اختر أو أدخل المبلغ",
+    "checkout": "الدفع",
+    "processing": "جاري المعالجة...",
+    "success": "تم إضافة الرصيد!",
+    "error": "فشل الدفع"
+  },
+  "downloads": {
+    "title": "التحميلات",
+    "subtitle": "احصل على أحدث الإصدارات",
+    "activeVersion": "الإصدار النشط",
+    "size": "الحجم",
+    "downloaded": "تم التحميل",
+    "accessDenied": "الترخيص مطلوب.",
+    "downloadNow": "تحميل الآن",
+    "noFiles": "لا توجد ملفات"
+  },
+  "pricingPage": {
+    "title": "خطط المنتجات",
+    "subtitle": "اختر حمايتك",
+    "popular": "شائع",
+    "monthly": "شهري",
+    "trimonthly": "3 أشهر",
+    "lifetime": "مدى الحياة",
+    "loading": "جاري التحميل...",
+    "purchase": "شراء",
+    "oneTime": "مرة واحدة",
+    "subscription": "اشتراك",
+    "billingToggleAria": "تغيير نوع الدفع",
+    "billingToggleHint": "اختر بين شراء مرة واحدة أو خطط الاشتراك"
+  },
+  "toast": {
+    "feedbackThanks": "شكراً لتقييمك!",
+    "feedbackStub": "تم اكتشاف تقييم وهمي",
+    "feedbackFailed": "فشل تقديم التقييم"
+  },
+  "partners": {
+    "title": "الشركاء الرسميون",
+    "subtitle": "اكتشف شركاء مجتمعنا الموثوقين وقدّم طلبك للانضمام.",
+    "ourPartners": "شركاؤنا",
+    "loading": "جاري تحميل الشركاء…",
+    "noPartners": "لا يوجد شركاء رسميون بعد. كن أول من يقدّم!",
+    "applyTitle": "التقديم للشراكة",
+    "applyDesc": "أدخل تفاصيل سيرفرك. سيقوم فريقنا بمراجعة طلبك.",
+    "serverName": "اسم السيرفر",
+    "serverType": "نوع السيرفر",
+    "peakPlayers": "أقصى عدد لاعبين (Peak) في سيرفرك",
+    "discordLink": "رابط الديسكورد",
+    "logoUrl": "رابط الشعار (اختياري)",
+    "signInRequired": "يجب تسجيل الدخول عبر Discord لتقديم الطلب.",
+    "submit": "إرسال الطلب",
+    "submitting": "جاري الإرسال…"
+  },
+  "ai": {
+    "title": "Air AI",
+    "subtitle": "المساعد الذكي",
+    "newChat": "محادثة جديدة",
+    "noConversations": "لا توجد محادثات بعد",
+    "askAnything": "اسألني أي شيء عن منتجات VexShield أو سيرفرات FiveM أو حل المشاكل أو البرمجة.",
+    "placeholder": "اسأل Air AI أي شيء...",
+    "send": "إرسال",
+    "thinking": "جاري التفكير...",
+    "memoryInfo": "الذكاء يتذكر السياق عبر المحادثات",
+    "disclaimer": "Air AI يمكن أن يخطئ. تحقق من المعلومات المهمة.",
+    "suggestions": {
+      "setup": "كيف أقوم بإعداد VexShield؟",
+      "subscription": "تحقق من حالة اشتراكي",
+      "error": "ساعدني في إصلاح خطأ FiveM",
+      "scanner": "اشرح كيف يعمل AirScanner"
+    },
+    "agents": {
+      "support": "مساعد الدعم الفني",
+      "developer": "مساعد البرمجة (FiveM/Lua/C#/Node)",
+      "anticheat": "متخصص تحليل الغش",
+      "billing": "الفوترة والاشتراكات",
+      "sales": "المبيعات ومعلومات المنتجات"
+    },
+    "admin": {
+      "title": "إدارة Air AI",
+      "description": "إدارة إعدادات الذكاء والوكلاء والتحليلات",
+      "settings": "الإعدادات",
+      "agents": "الوكلاء",
+      "conversations": "المحادثات",
+      "knowledge": "قاعدة المعرفة",
+      "localAI": "الذكاء المحلي",
+      "messages30d": "الرسائل (30 يوم)",
+      "cost30d": "التكلفة (30 يوم)",
+      "tokens30d": "الرموز (30 يوم)",
+      "serverStatus": "حالة السيرفر",
+      "connected": "متصل",
+      "unreachable": "غير متاح",
+      "notConfigured": "غير مهيأ",
+      "selfHosted": "مستضاف ذاتياً 100% — بدون APIs خارجية",
+      "installedModels": "النماذج المثبتة",
+      "downloadModel": "تحميل نموذج",
+      "pullPlaceholder": "مثال: llama3.1:8b, qwen2.5:7b, mistral:7b",
+      "recommendedModels": "النماذج الموصى بها",
+      "setupGuide": "دليل الإعداد السريع",
+      "modelsInstalled": "{{count}} نموذج مثبت"
+    },
+    "errors": {
+      "failedCreate": "فشل إنشاء المحادثة",
+      "failedSend": "فشل إرسال الرسالة",
+      "disabled": "الذكاء معطل حالياً",
+      "tryAgain": "يرجى المحاولة مرة أخرى"
+    }
+  },
+  "dashboard": {
+    "common": {
+      "invalidServerConnection": "اتصال السيرفر غير صالح",
+      "connectToServerFirst": "يرجى الاتصال بسيرفر أولاً",
+      "missingLicenseKey": "مفتاح الترخيص مفقود. يرجى إعادة الاتصال بالسيرفر.",
+      "serverNoLongerExists": "السيرفر لم يعد موجوداً",
+      "licenseExpired": "انتهت صلاحية ترخيص هذا السيرفر. تم قطع الاتصال.",
+      "verifyConnectionFailed": "تعذر التحقق من اتصال السيرفر",
+      "serverNotFound": "السيرفر غير موجود",
+      "serverNotFoundDescription": "السيرفر الذي تبحث عنه غير موجود.",
+      "goHome": "العودة للرئيسية",
+      "retry": "إعادة المحاولة",
+      "temporaryServerError": "تعذر الوصول إلى السيرفر الآن. غالباً المشكلة مؤقتة، حاول مرة أخرى.",
+      "noAccess": "ليس لديك صلاحية للوصول إلى هذه الصفحة",
+      "pcTrialNoAccess": "هذه الصفحة غير متاحة في تجربة PC Checker",
+      "loadingServerData": "جارٍ تحميل بيانات السيرفر...",
+      "tooManyRequests": "طلبات كثيرة جدًا",
+      "tooManyRequestsDescription": "الداشبورد يحدّث البيانات بسرعة كبيرة. انتظر دقيقة ثم حاول مرة أخرى.",
+      "couldNotLoadDashboard": "تعذر تحميل لوحة التحكم"
+    },
+    "search": {
+      "enterQuery": "أدخل Discord ID أو license أو اسم مستخدم",
+      "invalidQuery": "أدخل Discord ID أو license hash أو اسم مستخدم صحيح",
+      "lookupFailed": "فشل البحث",
+      "timedOut": "انتهت مهلة البحث. حاول مرة أخرى.",
+      "searchFailed": "فشل البحث",
+      "newSearch": "← بحث جديد",
+      "placeholder": "Discord ID أو license hash أو اسم مستخدم",
+      "button": "بحث",
+      "lookingUp": "جارٍ البحث عن اللاعب...",
+      "noMatch": "لا يوجد لاعب مطابق",
+      "noMatchHint": "جرّب Discord snowflake ID أو FiveM license hash أو اسم مستخدم دقيق.",
+      "syncingBanData": "جارٍ مزامنة بيانات الحظر الكاملة..."
+    },
+    "bans": {
+      "filtersTitle": "الفلاتر والبحث",
+      "filtersSubtitle": "ابحث وفلتر الحظر حسب Ban ID أو السبب أو اسم اللاعب",
+      "banOffline": "حظر لاعب غير متصل",
+      "searchPlaceholder": "بحث حسب Ban ID أو السبب أو اسم اللاعب...",
+      "sortBanIdAsc": "Ban ID: من الأقل للأعلى",
+      "sortBanIdDesc": "Ban ID: من الأعلى للأقل",
+      "sortNewest": "الأحدث أولاً",
+      "sortOldest": "الأقدم أولاً",
+      "recordsTitle": "سجلات الحظر",
+      "totalFound": "تم العثور على {{count}} حظر",
+      "noBans": "لا توجد حظورات",
+      "player": "اللاعب",
+      "banId": "Ban ID",
+      "reason": "السبب",
+      "evidence": "الدليل",
+      "status": "الحالة",
+      "bannedAt": "وقت الحظر",
+      "firstJoin": "أول دخول",
+      "actions": "الإجراءات",
+      "unbanPlayer": "إلغاء حظر اللاعب",
+      "unbanConfirm": "هل أنت متأكد أنك تريد إلغاء حظر {{player}}؟"
+    }
+  },
+  "serverManager": {
+    "addServer": "إضافة سيرفر",
+    "servers": "السيرفرات ({{count}})",
+    "title": "إدارة السيرفرات",
+    "description": "إدارة سيرفرات VexShield المتصلة",
+    "active": "نشط",
+    "connected": "متصل",
+    "disconnected": "غير متصل",
+    "apiEndpoint": "نقطة API",
+    "players": "{{count}}/{{max}} لاعب",
+    "uptime": "مدة التشغيل"
+  },
+  "notifications": {
+    "title": "التنبيهات",
+    "markAllRead": "تحديد الكل كمقروء",
+    "empty": "لا توجد تنبيهات بعد."
+  },
+  "faq": {
+    "title": "الأسئلة الشائعة",
+    "subtitle": "إجابات على الأسئلة الشائعة حول VexShield",
+    "viewDocs": "عرض التوثيق",
+    "stillQuestions": "هل لديك أسئلة أخرى؟",
+    "supportPrompt": "إذا لم تجد ما تبحث عنه، فريق الدعم هنا لمساعدتك.",
+    "joinDiscord": "انضم إلى Discord",
+    "readDocumentation": "اقرأ التوثيق",
+    "categories": [
+      {
+        "title": "Getting Started",
+        "faqs": [
+          {
+            "question": "What is VexShield?",
+            "answer": "VexShield is a comprehensive anti-cheat solution designed for FiveM servers with real-time monitoring, intelligent detections, and a web dashboard."
+          },
+          {
+            "question": "How do I install VexShield?",
+            "answer": "Buy a license, download the resource from your dashboard, upload it to resources, add ensure airshield to server.cfg, configure your IP and license key, then restart."
+          },
+          {
+            "question": "Do I need technical knowledge?",
+            "answer": "Basic FiveM knowledge helps, but the dashboard is designed to be simple. Documentation and Discord support are available."
+          }
+        ]
+      },
+      {
+        "title": "Features",
+        "faqs": [
+          {
+            "question": "How does VexShield detect cheaters?",
+            "answer": "It uses behavior analysis, signature checks, injection detection, resource monitoring, and network analysis."
+          },
+          {
+            "question": "Can I customize protections?",
+            "answer": "Yes. You can enable protections, choose actions, configure blacklists, sensitivity, and webhook notifications."
+          },
+          {
+            "question": "Does VexShield support Discord?",
+            "answer": "Yes. It supports Discord login, alerts, blacklist checks, and AirEye bot workflows."
+          }
+        ]
+      },
+      {
+        "title": "Billing & Support",
+        "faqs": [
+          {
+            "question": "Can I get a refund?",
+            "answer": "New customers can request a refund according to the refund policy."
+          },
+          {
+            "question": "What support is available?",
+            "answer": "Support is available through Discord, documentation, and staff assistance."
+          },
+          {
+            "question": "Can I extend my license?",
+            "answer": "Yes. Renewals are manual and add full time to your license."
+          }
+        ]
+      }
+    ]
+  },
+  "launchOffer": {
+    "close": "إغلاق العرض",
+    "leftTitle": "نسخة الإطلاق أصبحت قريبة.",
+    "dropTitle": "عرض إطلاق مؤقت",
+    "dropDescription": "الزوار الأوائل سيحصلون على خصم إطلاق V1 بعد الإصدار.",
+    "badge": "عرض إطلاق V1",
+    "afterLaunch": "بعد الإطلاق",
+    "description": "هذا تنبيه قبل الإطلاق فقط. الخصم سيكون متاحًا عند إطلاق VexShield V1 رسميًا.",
+    "launchesIn": "ينطلق VexShield V1 خلال",
+    "days": "أيام",
+    "hours": "ساعات",
+    "minutes": "دقائق",
+    "seconds": "ثواني",
+    "launchCode": "كود الإطلاق",
+    "locked": "مقفل",
+    "viewPlans": "عرض خطط الإطلاق",
+    "checkLater": "سأتحقق لاحقًا"
+  },
+  "authPage": {
+    "accessDenied": "حساب Discord هذا غير مسموح له بتسجيل الدخول.",
+    "signInFailed": "فشل تسجيل الدخول عبر Discord",
+    "title": "مرحبًا بعودتك",
+    "subtitle": "ادخل بحساب Discord للوصول إلى لوحة VexShield.",
+    "alreadyLoggedIn": "أنت مسجل الدخول بالفعل في الموقع.",
+    "confirmAppHandoff": "اضغط تأكيد لإرسال تسجيل الدخول إلى تطبيق Android.",
+    "confirmOpenApp": "تأكيد وفتح التطبيق",
+    "agreePrefix": "أوافق على",
+    "terms": "الشروط",
+    "privacy": "سياسة الخصوصية",
+    "and": "و",
+    "refund": "سياسة الاسترداد",
+    "connecting": "جارٍ الاتصال...",
+    "continueDiscord": "المتابعة عبر Discord",
+    "openDesktop": "فتح في تطبيق سطح المكتب",
+    "needHelp": "تحتاج مساعدة؟",
+    "signInLegal": "بتسجيل الدخول، أنت توافق على شروط الخدمة وسياسة الخصوصية",
+    "showcaseMember": "عضو انضم للمجتمع",
+    "showcaseWelcome": "مرحبًا بك في مجتمع VexShield",
+    "workflowTriggered": "تم تشغيل سير العمل",
+    "applyTags": "تطبيق الوسوم",
+    "addToSpaces": "إضافة للمساحات",
+    "rsvpEvent": "تسجيل للحدث",
+    "showcaseDescription": "اكتشف أدوات حماية Discord احترافية لإتقان حماية السيرفر."
+  },
+  "planDetails": {
+    "signInFirst": "سجّل الدخول أولاً",
+    "invalidCoupon": "كود الخصم غير صالح",
+    "couponAppliedToast": "تم تطبيق الكوبون: -{{amount}}",
+    "paypalLoadFailed": "فشل تحميل PayPal",
+    "failed": "فشل",
+    "purchaseComplete": "اكتملت العملية. قم بإعداد السيرفر الجديد من الملف الشخصي.",
+    "signInAgain": "سجّل الدخول مجددًا لإكمال الدفع.",
+    "paymentUnavailable": "خدمة الدفع غير متاحة",
+    "createOrderFailed": "تعذر إنشاء الطلب",
+    "captureFailed": "فشل تأكيد الدفع",
+    "paymentComplete": "اكتمل الدفع. قم بإعداد السيرفر الجديد من الملف الشخصي.",
+    "paymentFailed": "فشل الدفع",
+    "paypalStartFailed": "تعذر بدء PayPal. أعد تحميل الصفحة وحاول مرة أخرى.",
+    "paypalInitFailed": "فشل تهيئة PayPal",
+    "back": "رجوع",
+    "features": "الميزات",
+    "preferSeparate": "تفضل اختيار VexShield / AirScanner / AirPC بشكل منفصل؟",
+    "openPricing": "افتح صفحة الأسعار",
+    "couponCode": "كود الخصم",
+    "apply": "تطبيق",
+    "couponApplied": "تم تطبيق الكوبون {{code}}",
+    "planPrice": "سعر الخطة",
+    "sale": "تخفيض",
+    "yourFunds": "رصيدك",
+    "couponDiscount": "خصم الكوبون",
+    "useFunds": "استخدم رصيدي",
+    "totalToPay": "الإجمالي للدفع",
+    "loadingPayment": "جارٍ تحميل خيارات الدفع...",
+    "paypalNotEnabled": "PayPal غير مفعل في خادم API. قم بإعداد بيانات PayPal وأعد التشغيل.",
+    "processing": "جارٍ المعالجة...",
+    "useFundsComplete": "استخدم الرصيد وأكمل الشراء"
+  },
+  "myServers": {
+    "signInRequired": "يرجى تسجيل الدخول لعرض سيرفراتك",
+    "loadFailed": "فشل تحميل السيرفرات",
+    "badge": "لوحة التحكم",
+    "title": "سيرفراتي",
+    "globalTitle": "كل السيرفرات",
+    "description": "السيرفرات التي تملكها أو تمت إضافتك لها كمدير تظهر هنا.",
+    "globalDescription": "عرض مدير الموقع لكل السيرفرات في قاعدة البيانات.",
+    "global": "الكل",
+    "loading": "جارٍ تحميل سيرفراتك...",
+    "noGlobalServers": "لا توجد سيرفرات في قاعدة البيانات",
+    "noServers": "لا توجد سيرفرات بعد",
+    "noGlobalHint": "لا توجد صفوف سيرفرات للعرض.",
+    "noServersHint": "اشترِ أو احصل على ترخيص، أو اطلب من المالك إضافة بريدك في Admins.",
+    "noMatches": "لا توجد نتائج",
+    "noMatchesHint": "جرّب تغيير البحث أو الفلاتر. {{count}} سيرفر مخفي.",
+    "searchPlaceholder": "بحث بالاسم أو ID أو بريد المالك...",
+    "serverStatus": "حالة السيرفر",
+    "allServers": "كل السيرفرات",
+    "onlineOnly": "المتصلة فقط",
+    "offlineOnly": "غير المتصلة فقط",
+    "withPlayers": "بها لاعبين",
+    "sortBy": "ترتيب حسب",
+    "defaultOrder": "الترتيب الافتراضي",
+    "mostPlayers": "أكثر لاعبين متصلين",
+    "fewestPlayers": "أقل لاعبين متصلين",
+    "showing": "عرض {{shown}} من {{total}}",
+    "owner": "المالك",
+    "adminAccess": "صلاحية مدير",
+    "other": "أخرى",
+    "removalPending": "الإزالة معلقة",
+    "playersOnline": "لاعب متصل",
+    "disabledPending": "هذا الترخيص معطل بانتظار إجراء من الإدارة. استخدم",
+    "openDashboard": "فتح لوحة التحكم"
+  },
+  "pcchecker": {
+    "loadPinsFailed": "فشل تحميل الرموز",
+    "copied": "تم نسخ {{label}}",
+    "copyFailed": "فشل النسخ",
+    "deleteFailed": "فشل الحذف",
+    "pinRemoved": "تم حذف الرمز",
+    "myPins": "رموزي",
+    "subtitle": "أنشئ روابط فحص وتابع التقدم المباشر وراجع نتائج مكافحة الغش بسهولة.",
+    "createNewPin": "إنشاء رمز جديد",
+    "searchPlaceholder": "بحث حسب الرمز أو الاسم...",
+    "allStatus": "كل الحالات",
+    "refresh": "تحديث",
+    "loadingPins": "جارٍ تحميل الرموز...",
+    "noPins": "لا توجد رموز بعد",
+    "noMatchingPins": "لا توجد رموز مطابقة",
+    "noPinsHint": "أنشئ أول رمز فحص لمشاركته مع لاعب وبدء المتابعة.",
+    "noMatchingHint": "جرّب تعديل البحث أو الفلتر.",
+    "createFirstPin": "إنشاء أول رمز",
+    "private": "خاص",
+    "public": "عام",
+    "liveScan": "فحص مباشر",
+    "viewResults": "عرض النتائج",
+    "copyPinCode": "نسخ الرمز",
+    "copyDownloadUrl": "نسخ رابط التحميل",
+    "deletePin": "حذف الرمز",
+    "createScanPin": "إنشاء رمز فحص",
+    "pinNamePlaceholder": "مثال: اسم اللاعب أو رقم الحالة",
+    "privatePin": "رمز خاص",
+    "privatePinHint": "ظاهر لأعضاء فريقك فقط",
+    "createPin": "إنشاء الرمز",
+    "pinCreated": "تم إنشاء الرمز بنجاح!",
+    "downloadUrl": "رابط التحميل",
+    "hardMode": "الوضع الصعب"
+  },
+  "docs": {
+    "brand": "توثيق VexShield",
+    "documentation": "التوثيق",
+    "lastModified": "آخر تعديل {{date}}",
+    "searchDocs": "ابحث في التوثيق...",
+    "previous": "السابق",
+    "next": "التالي",
+    "docs": "التوثيق",
+    "onThisPage": "في هذه الصفحة",
+    "copyCode": "نسخ الكود",
+    "copied": "تم النسخ"
+  }
+}

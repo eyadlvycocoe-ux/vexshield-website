@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>3D GTA5 Map</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="three.js"></script>
+	<script src="Detector.js"></script>
+	<script src="OrbitControls.js"></script>
+	<script src="OBJLoader.js"></script>
+	<script src="MTLLoader.js"></script>
+	<style>
+		body {
+			overflow: hidden;
+			margin: 0;
+			padding: 0;
+			font-family: 'Segoe UI', sans-serif;
+			background: #1a6b8a;
+		}
+
+		.location {
+			position: fixed;
+			top: 32px;
+			left: 32px;
+			width: 128px;
+			background: rgba(0, 0, 0, 0.8);
+			padding: 8px;
+			z-index: 10;
+			pointer-events: none;
+		}
+
+		.text {
+			color: #FFF;
+			font-size: 12px;
+			font-family: monospace;
+		}
+
+		#ws-loader {
+			position: fixed;
+			inset: 0;
+			z-index: 999;
+			background: #1a6b8a;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 14px;
+			transition: opacity 0.6s ease;
+		}
+
+		#ws-loader-bar-wrap {
+			width: 240px;
+			height: 3px;
+			background: rgba(255, 255, 255, 0.1);
+			border-radius: 2px;
+		}
+
+		#ws-loader-bar {
+			height: 100%;
+			width: 0%;
+			background: rgba(255, 255, 255, 0.6);
+			border-radius: 2px;
+			transition: width 0.2s ease;
+		}
+
+		#ws-loader-label {
+			font: 11px/1 'Segoe UI', monospace;
+			letter-spacing: 0.2em;
+			text-transform: uppercase;
+			color: rgba(255, 255, 255, 0.6);
+		}
+	</style>
+</head>
+
+<body>
+	<div id="ws-loader">
+		<div id="ws-loader-bar-wrap">
+			<div id="ws-loader-bar"></div>
+		</div>
+		<div id="ws-loader-label">Loading 3D Map...</div>
+	</div>
+	<div class="location">
+		<div class="text"></div>
+	</div>
+	<script type="text/javascript">
+		if (!Detector.webgl) { Detector.addGetWebGLMessage(); }
+
+		var container;
+		var camera, controls, scene, renderer;
+		var lighting, ambient, keyLight, fillLight, backLight;
+		var taa, object_g, cp;
+		var markList = new Array(0);
+		var mouseX, mouseY, oldMouseX, oldMouseY;
+		var lastClick;
+		var isFocus = true;
+		var RIGHT_PAN_SPEED = 0.48;
+		var navDrag = null;
+		var navTouch = null;
+		var navMouse = new THREE.Vector2();
+		var navRaycaster = new THREE.Raycaster();
+		var groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+		var planeHit = new THREE.Vector3();
+		var playerGroup = null;
+		var playerMap = {};
+		var playerLerp = {};
+		var lastFrameTime = 0;
+		var LERP_DURATION = 2500;
+		var texCache = {};
+		var mapReady = false;
+		var dirtyRender = true;
+		var lastRenderTime = 0;
+		var FRAME_INTERVAL = 33;
+		var mouse = new THREE.Vector2();
+		var raycaster = new THREE.Raycaster();
+
+		function setLoaderProgress(pct) {
+			var bar = document.getElementById('ws-loader-bar');
+			if (bar) bar.style.width = Math.min(pct, 100) + '%';
+		}
+
+		function getMarkerTex(kind, threat) {
+			var key = kind + (threat ? ':!' : '');
+			if (texCache[key]) return texCache[key];
+			var C = document.createElement('canvas'); C.width = C.height = 64;
+			var ctx = C.getContext('2d');
+			var fills = { admin: '#f97316', vehicle: '#2563eb', swimming: '#0891b2', armed: '#dc2626', dead: '#374151', player: '#0b1c2e' };
+			var rings = { admin: '#fed7aa', vehicle: '#93c5fd', swimming: '#a5f3fc', armed: '#fca5a5', dead: '#9ca3af', player: '#38bdf8' };
+			var fill = fills[kind] || fills.player, ring = rings[kind] || rings.player;
+			ctx.shadowColor = ring; ctx.shadowBlur = 12;
+			ctx.beginPath(); ctx.arc(32, 32, 24, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill();
+			ctx.lineWidth = 4; ctx.strokeStyle = ring; ctx.stroke(); ctx.shadowBlur = 0;
+			ctx.strokeStyle = '#ffffff'; ctx.fillStyle = '#ffffff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+			if (kind === 'vehicle') {
+				ctx.strokeRect(16, 27, 32, 12);
+				ctx.beginPath(); ctx.moveTo(20, 27); ctx.lineTo(24, 20); ctx.lineTo(40, 20); ctx.lineTo(44, 27); ctx.stroke();
+				ctx.beginPath(); ctx.arc(22, 42, 4, 0, Math.PI * 2); ctx.fill();
+				ctx.beginPath(); ctx.arc(42, 42, 4, 0, Math.PI * 2); ctx.fill();
+			} else if (kind === 'admin') {
+				ctx.beginPath(); ctx.moveTo(32, 14); ctx.lineTo(47, 20); ctx.lineTo(47, 32);
+				ctx.quadraticCurveTo(47, 48, 32, 52); ctx.quadraticCurveTo(17, 48, 17, 32); ctx.lineTo(17, 20); ctx.closePath(); ctx.stroke();
+			} else if (kind === 'swimming') {
+				ctx.lineWidth = 2.8;
+				ctx.beginPath(); ctx.moveTo(16, 28); ctx.quadraticCurveTo(24, 22, 32, 28); ctx.quadraticCurveTo(40, 34, 48, 28); ctx.stroke();
+				ctx.beginPath(); ctx.moveTo(16, 38); ctx.quadraticCurveTo(24, 32, 32, 38); ctx.quadraticCurveTo(40, 44, 48, 38); ctx.stroke();
+			} else if (kind === 'armed') {
+				ctx.lineWidth = 2.6;
+				ctx.beginPath(); ctx.moveTo(14, 32); ctx.lineTo(40, 32); ctx.lineTo(40, 26); ctx.lineTo(48, 26);
+				ctx.lineTo(48, 36); ctx.lineTo(40, 36); ctx.lineTo(40, 42); ctx.lineTo(20, 42); ctx.closePath(); ctx.stroke();
+				ctx.beginPath(); ctx.moveTo(24, 42); ctx.lineTo(24, 48); ctx.stroke();
+			} else if (kind === 'dead') {
+				ctx.lineWidth = 4;
+				ctx.beginPath(); ctx.moveTo(18, 18); ctx.lineTo(46, 46); ctx.stroke();
+				ctx.beginPath(); ctx.moveTo(46, 18); ctx.lineTo(18, 46); ctx.stroke();
+			} else {
+				ctx.beginPath(); ctx.arc(32, 24, 7, 0, Math.PI * 2); ctx.stroke();
+				ctx.beginPath(); ctx.arc(32, 47, 13, Math.PI, 0); ctx.stroke();
+			}
+			if (threat) {
+				ctx.beginPath(); ctx.arc(54, 10, 7, 0, Math.PI * 2); ctx.fillStyle = '#ef4444'; ctx.fill();
+				ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', 54, 10);
+			}
+			var tex = new THREE.Texture(C); tex.needsUpdate = true; texCache[key] = tex; return tex;
+		}
+
+		function resolveKind(p) {
+			if (p.admin) return 'admin';
+			var status = (p.status || '').toUpperCase();
+			if (status === 'IN_VEHICLE' || p.inVehicle === true) return 'vehicle';
+			if (status === 'SWIMMING') return 'swimming';
+			if (status === 'ARMED') return 'armed';
+			if (status === 'DEAD') return 'dead';
+			return 'player';
+		}
+
+		function setPlayerMarkers(players) {
+			if (!playerGroup) return;
+			var next = {};
+			(players || []).forEach(function (p) {
+				var id = String(p.id); next[id] = true;
+				var kind = resolveKind(p), threat = Number(p.threatScore || 0) >= 60;
+				var sprite = playerMap[id];
+				var isNew = !sprite;
+
+				if (sprite && (sprite.userData.kind !== kind || sprite.userData.threat !== threat)) {
+					playerGroup.remove(sprite); sprite = null; isNew = true;
+				}
+				if (!sprite) {
+					sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+						map: getMarkerTex(kind, threat),
+						transparent: true, depthTest: false, depthWrite: false
+					}));
+					sprite.scale.set(120, 120, 1);
+					sprite.userData.kind = kind;
+					sprite.userData.threat = threat;
+					sprite.userData.playerId = id;
+					sprite.userData.playerName = p.name;
+					sprite.name = 'player-' + id;
+					playerMap[id] = sprite;
+					playerGroup.add(sprite);
+				}
+
+				var tx = Number(p.x) || 0;
+				var ty = Number(p.z) || 170;
+				var tz = -(Number(p.y) || 0);
+
+				if (isNew || !playerLerp[id]) {
+					sprite.position.set(tx, ty, tz);
+					playerLerp[id] = { sx: tx, sy: ty, sz: tz, tx: tx, ty: ty, tz: tz, elapsed: LERP_DURATION, duration: LERP_DURATION };
+				} else {
+					playerLerp[id] = {
+						sx: sprite.position.x, sy: sprite.position.y, sz: sprite.position.z,
+						tx: tx, ty: ty, tz: tz, elapsed: 0, duration: LERP_DURATION
+					};
+				}
+			});
+			for (var mid in playerMap) {
+				if (!next[mid]) { playerGroup.remove(playerMap[mid]); delete playerMap[mid]; delete playerLerp[mid]; }
+			}
+		}
+
+		function tickLerps(dt) {
+			var anyMoved = false;
+			for (var id in playerLerp) {
+				var ld = playerLerp[id];
+				if (ld.elapsed >= ld.duration) continue;
+				ld.elapsed += dt;
+				anyMoved = true;
+				var raw = Math.min(ld.elapsed / ld.duration, 1.0);
+				var t = raw * raw * (3.0 - 2.0 * raw);
+				var s = playerMap[id];
+				if (s) s.position.set(
+					ld.sx + (ld.tx - ld.sx) * t,
+					ld.sy + (ld.ty - ld.sy) * t,
+					ld.sz + (ld.tz - ld.sz) * t
+				);
+			}
+		}
+
+		function nearestPlayer(sx, sy) {
+			if (!playerGroup || !camera || !renderer) return null;
+			var W = renderer.domElement.clientWidth || window.innerWidth;
+			var H = renderer.domElement.clientHeight || window.innerHeight;
+			var best = null, bestD = 34 * 34;
+			playerGroup.children.forEach(function (marker) {
+				var proj = marker.position.clone().project(camera);
+				if (proj.z < -1 || proj.z > 1) return;
+				var px = (proj.x * 0.5 + 0.5) * W, py = (-proj.y * 0.5 + 0.5) * H;
+				var d2 = (px - sx) * (px - sx) + (py - sy) * (py - sy);
+				if (d2 < bestD) { bestD = d2; best = marker; }
+			});
+			return best;
+		}
+
+		function textSize(fontSize, fontFamily, text) {
+			var span = document.createElement("span");
+			var result = {};
+			result.width = span.offsetWidth;
+			result.height = span.offsetHeight;
+			span.style.visibility = "hidden";
+			span.style.fontSize = fontSize;
+			span.style.fontFamily = fontFamily;
+			span.style.display = "inline-block";
+			document.body.appendChild(span);
+			if (typeof span.textContent != "undefined") { span.textContent = text; } else { span.innerText = text; }
+			result.width = parseFloat(window.getComputedStyle(span).width) - result.width;
+			result.height = parseFloat(window.getComputedStyle(span).height) - result.height;
+			document.body.removeChild(span);
+			return result;
+		}
+
+		window.addTextMark = function (name, text, x, y, z, font, fontSize, width, height, color, background) {
+			if (name == null || text == null || x == null || y == null || z == null) return false;
+			for (var i = 0; i < markList.length; i++) { if (markList[i].name == name) return false; }
+			font = font || "Arial"; fontSize = fontSize || 100;
+			color = color || "#FFFFFF"; background = background || "rgba(0,0,0,0.7)";
+			var fontTempSize = textSize(fontSize + "px", font, text);
+			width = width || fontTempSize.width / 3.4;
+			height = height || fontTempSize.height / 2.5;
+			var canvas = document.createElement('canvas');
+			var ctx = canvas.getContext('2d');
+			canvas.width = width * 4; canvas.height = height * 4;
+			ctx.fillStyle = background; ctx.fillRect(0, 0, width * 4, height * 4);
+			ctx.fillStyle = color; ctx.font = 'normal ' + fontSize + 'px "' + font + '"';
+			ctx.fillText(text, fontSize / 2.6, fontSize + 32);
+			var url = canvas.toDataURL('image/png');
+			var geometry1 = new THREE.PlaneGeometry(width, height);
+			var texture = THREE.ImageUtils.loadTexture(url, null, function (t) { });
+			var material1 = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, opacity: 1, transparent: true });
+			var newMark = new THREE.Mesh(geometry1, material1);
+			newMark.position.set(x, z, -y); newMark.name = name;
+			markList.push(newMark); scene.add(newMark);
+		};
+
+		window.removeTextMark = function (name) {
+			if (name == null) return false;
+			for (var i = 0; i < markList.length; i++) {
+				if (markList[i].name == name) {
+					var o = scene.getObjectByName(name); scene.remove(o);
+					markList.splice(i, 1); return true;
+				}
+			}
+			return false;
+		};
+
+		window.updateTextMarkCoords = function (name, x, y, z) {
+			var o = scene.getObjectByName(name);
+			if (o != null && o.position != undefined) { o.position.set(x, z, -y); }
+		};
+
+		function focusOnPlayer(player) {
+			if (!player || typeof player.x !== "number" || typeof player.y !== "number") return;
+			var tx = Number(player.x) || 0;
+			var tz = -(Number(player.y) || 0);
+			var ty = Number(player.z) || 170;
+			controls.target.set(tx, ty, tz);
+			camera.position.set(tx - 500, ty + 400, tz - 500);
+			controls.update();
+			dirtyRender = true;
+
+		}
+
+		function disableFrustumCull(object) {
+			if (!object) return;
+			object.traverse(function (child) {
+				if (child.isMesh) {
+					child.frustumCulled = false;
+				}
+			});
+		}
+
+		function init() {
+			container = document.createElement('div');
+			document.body.appendChild(container);
+
+			camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 10, 40000);
+			camera.position.x = -6817.53520738839;
+			camera.position.y = 5122.667802130858;
+			camera.position.z = 2358.9515954296567;
+			camera.rotation.x = -1.0487587367436757;
+			camera.rotation.y = -0.8076078014684026;
+			camera.rotation.z = -0.8984546685815199;
+
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x1a6b8a);
+			playerGroup = new THREE.Group();
+			playerGroup.name = 'wolf-players';
+			scene.add(playerGroup);
+
+			var waterGeo = new THREE.PlaneGeometry(30000, 30000);
+			var waterMat = new THREE.MeshBasicMaterial({ color: 0x1a6b8a, depthWrite: false });
+			var water = new THREE.Mesh(waterGeo, waterMat);
+			water.rotation.x = -Math.PI / 2;
+			water.position.y = -15;
+			water.renderOrder = -1;
+			water.frustumCulled = false;
+			scene.add(water);
+			lighting = false;
+
+			ambient = new THREE.AmbientLight(0xffffff, 0.6);
+			scene.add(ambient);
+
+			keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.5);
+			keyLight.position.set(-100, 0, 100);
+			fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(240, 100%, 75%)'), 1.75);
+			fillLight.position.set(100, 0, 100);
+			backLight = new THREE.DirectionalLight(0xffffff, 1.0);
+			backLight.position.set(100, 0, -100).normalize();
+
+			var mtlLoader = new THREE.MTLLoader();
+			mtlLoader.setBaseUrl('obj/');
+			mtlLoader.setPath('obj/');
+			mtlLoader.load('model.mtl', function (materials) {
+				taa = materials;
+				materials.preload();
+				for (var a in materials.materials) {
+					if (materials.materials[a].map != null && materials.materials[a].map != undefined) {
+						materials.materials[a].map.magFilter = THREE.LinearFilter;
+						materials.materials[a].map.minFilter = THREE.LinearMipmapLinearFilter;
+						materials.materials[a].map.anisotropy = 4;
+					}
+				}
+				setLoaderProgress(8);
+
+				var workerCode = `
+						self.onmessage = function(e) {
+							var url = e.data.url;
+							fetch(url)
+								.then(function(res) {
+									if (!res.ok) throw new Error("Failed to fetch OBJ");
+									return res.text();
+								})
+								.then(function(text) {
+									self.postMessage({ type: 'progress', pct: 40 });
+									var objects = parseOBJ(text);
+									self.postMessage({ type: 'progress', pct: 90 });
+									
+									var transferList = [];
+									objects.forEach(function(obj) {
+										if (obj.vertices) transferList.push(obj.vertices.buffer);
+										if (obj.normals) transferList.push(obj.normals.buffer);
+										if (obj.uvs) transferList.push(obj.uvs.buffer);
+									});
+									self.postMessage({ type: 'done', objects: objects }, transferList);
+								})
+								.catch(function(err) {
+									self.postMessage({ type: 'error', message: err.message });
+								});
+						};
+
+						function parseOBJ(text) {
+							var lines = text.split('\\n');
+							var vertices = [];
+							var normals = [];
+							var uvs = [];
+							var objects = [];
+							var currentObject = {
+								name: '',
+								materialName: '',
+								vertices: [],
+								normals: [],
+								uvs: []
+							};
+
+							function startObject(name) {
+								if (currentObject.vertices.length > 0) {
+									objects.push(currentObject);
+								}
+								currentObject = {
+									name: name || '',
+									materialName: currentObject.materialName,
+									vertices: [],
+									normals: [],
+									uvs: []
+								};
+							}
+
+							var progressStep = Math.floor(lines.length / 10) || 10000;
+							for (var i = 0; i < lines.length; i++) {
+								if (i % progressStep === 0) {
+									self.postMessage({ type: 'progress', pct: 40 + Math.round((i / lines.length) * 50) });
+								}
+								var line = lines[i].trim();
+								if (line.length === 0 || line.charAt(0) === '#') continue;
+
+								var parts = line.split(/\\s+/);
+								var type = parts[0];
+
+								if (type === 'v') {
+									vertices.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));
+								} else if (type === 'vn') {
+									normals.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));
+								} else if (type === 'vt') {
+									uvs.push(parseFloat(parts[1]), parseFloat(parts[2]));
+								} else if (type === 'f') {
+									var len = parts.length;
+									if (len < 4) continue;
+
+									var parseIndex = function(val, arrLen, stride) {
+										var idx = parseInt(val, 10);
+										if (isNaN(idx)) return -1;
+										return (idx >= 0 ? idx - 1 : idx + arrLen / stride) * stride;
+									};
+
+									var faceVerts = [];
+									for (var j = 1; j < len; j++) {
+										var subparts = parts[j].split('/');
+										var vIdx = parseIndex(subparts[0], vertices.length, 3);
+										var vtIdx = subparts[1] ? parseIndex(subparts[1], uvs.length, 2) : -1;
+										var vnIdx = subparts[2] ? parseIndex(subparts[2], normals.length, 3) : -1;
+										faceVerts.push({ v: vIdx, vt: vtIdx, vn: vnIdx });
+									}
+
+									for (var j = 1; j < faceVerts.length - 1; j++) {
+										var idxs = [0, j, j + 1];
+										for (var k = 0; k < 3; k++) {
+											var fv = faceVerts[idxs[k]];
+											if (fv.v >= 0) {
+												currentObject.vertices.push(vertices[fv.v], vertices[fv.v+1], vertices[fv.v+2]);
+											}
+											if (fv.vn >= 0) {
+												currentObject.normals.push(normals[fv.vn], normals[fv.vn+1], normals[fv.vn+2]);
+											} else {
+												currentObject.normals.push(0, 1, 0);
+											}
+											if (fv.vt >= 0) {
+												currentObject.uvs.push(uvs[fv.vt], uvs[fv.vt+1]);
+											} else {
+												currentObject.uvs.push(0, 0);
+											}
+										}
+									}
+								} else if (type === 'usemtl') {
+									var matName = parts.slice(1).join(' ').trim();
+									if (currentObject.vertices.length > 0) {
+										startObject(currentObject.name);
+									}
+									currentObject.materialName = matName;
+								} else if (type === 'o' || type === 'g') {
+									var objName = parts.slice(1).join(' ').trim();
+									startObject(objName);
+								}
+							}
+
+							if (currentObject.vertices.length > 0) {
+								objects.push(currentObject);
+							}
+
+							return objects.map(function(obj) {
+								return {
+									name: obj.name,
+									materialName: obj.materialName,
+									vertices: new Float32Array(obj.vertices),
+									normals: new Float32Array(obj.normals),
+									uvs: new Float32Array(obj.uvs)
+								};
+							});
+						}
+					`;
+
+				var blob = new Blob([workerCode], { type: 'application/javascript' });
+				var worker = new Worker(URL.createObjectURL(blob));
+
+				worker.onmessage = function (e) {
+					var msg = e.data;
+					if (msg.type === 'progress') {
+						setLoaderProgress(msg.pct);
+					} else if (msg.type === 'done') {
+						var container = new THREE.Group();
+						var meshDataList = msg.objects;
+
+						meshDataList.forEach(function (data) {
+							if (data.vertices.length === 0) return;
+
+							var geometry = new THREE.BufferGeometry();
+							geometry.addAttribute('position', new THREE.BufferAttribute(data.vertices, 3));
+							if (data.normals && data.normals.length > 0) {
+								geometry.addAttribute('normal', new THREE.BufferAttribute(data.normals, 3));
+							}
+							if (data.uvs && data.uvs.length > 0) {
+								geometry.addAttribute('uv', new THREE.BufferAttribute(data.uvs, 2));
+							}
+
+							var material = null;
+							if (data.materialName === 'water') {
+								material = new THREE.MeshBasicMaterial({ color: 0x1a6b8a, depthWrite: false });
+							} else if (materials !== null) {
+								material = materials.create(data.materialName);
+							}
+							if (!material) {
+								material = new THREE.MeshPhongMaterial();
+								material.name = data.materialName;
+							}
+
+							material.shading = THREE.SmoothShading;
+
+							var mesh = new THREE.Mesh(geometry, material);
+							mesh.name = data.name;
+							container.add(mesh);
+						});
+
+						window.object_g = container;
+						container.visible = false;
+						scene.add(container);
+						disableFrustumCull(container);
+
+						var sunlight = new THREE.DirectionalLight(0xfff5e6, 1.8);
+						sunlight.position.set(554, 2000, 1);
+						sunlight.castShadow = false;
+						scene.add(sunlight);
+
+						var hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x2d5a27, 0.4);
+						scene.add(hemiLight);
+
+						var texCount = 0;
+						var texTotal = 0;
+						for (var a in materials.materials) {
+							if (materials.materials[a].map) texTotal++;
+						}
+
+						var waitForTextures = function () {
+							var allLoaded = true;
+							for (var a in materials.materials) {
+								if (materials.materials[a].map && !materials.materials[a].map.image) {
+									allLoaded = false;
+									break;
+								}
+							}
+							if (allLoaded || texCount > 200) {
+								container.visible = true;
+								container.traverse(function (child) { if (child.material) child.material.needsUpdate = true; });
+								setLoaderProgress(100);
+								var loader = document.getElementById('ws-loader');
+								if (loader) {
+									loader.style.opacity = '0';
+									setTimeout(function () { loader.style.display = 'none'; }, 650);
+								}
+								mapReady = true;
+								window.parent.postMessage({ type: 'mapReady' }, '*');
+							} else {
+								texCount++;
+								setLoaderProgress(90 + Math.round((texCount / 200) * 10));
+								setTimeout(waitForTextures, 50);
+							}
+						};
+						waitForTextures();
+					} else if (msg.type === 'error') {
+						console.error("Worker error: " + msg.message);
+					}
+				};
+
+				var absoluteUrl = new URL('obj/model.obj', window.location.href).href;
+				worker.postMessage({ url: absoluteUrl });
+			});
+
+			renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.setClearColor(new THREE.Color(0x1a6b8a));
+			renderer.sortObjects = false;
+			container.appendChild(renderer.domElement);
+			renderer.domElement.addEventListener('contextmenu', function (e) { e.preventDefault(); }, false);
+			renderer.domElement.addEventListener('mousedown', onNavMouseDown, true);
+			renderer.domElement.addEventListener('touchstart', onNavTouchStart, { passive: false, capture: true });
+			renderer.domElement.addEventListener('touchmove', onNavTouchMove, { passive: false, capture: true });
+			renderer.domElement.addEventListener('touchend', onNavTouchEnd, { passive: false, capture: true });
+			renderer.domElement.addEventListener('touchcancel', onNavTouchEnd, { passive: false, capture: true });
+			document.addEventListener('mousemove', onNavMouseMove, true);
+			document.addEventListener('mouseup', onNavMouseUp, true);
+
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
+			controls.enableDamping = true;
+			controls.dampingFactor = 0.05;
+			controls.rotateSpeed = 0.24;
+			controls.panSpeed = 0.5;
+			controls.zoomSpeed = 0.7;
+			controls.enableZoom = true;
+			controls.enablePan = false;
+			controls.minDistance = 500;
+			controls.maxDistance = 8000;
+			controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+			window.addEventListener('resize', onWindowResize, false);
+			window.addEventListener('keydown', onKeyboardEvent, false);
+			window.addEventListener('mousemove', onMouseMove, false);
+			window.addEventListener('mousedown', onMouseDown, false);
+			window.addEventListener('mouseup', onMouseUp, false);
+			window.addEventListener("message", function (event) {
+				var msg = event.data;
+				if (!msg || !msg.type) return;
+				switch (msg.type) {
+					case "updatePlayers":
+						setPlayerMarkers(msg.players || []);
+						break;
+					case "focusPlayer":
+						focusOnPlayer(msg.player);
+						break;
+					case "setMapStyle":
+					case "setHeatmap":
+						break;
+				}
+			});
+		}
+
+		init();
+		animate();
+
+		var coordEl = document.querySelector('.location .text');
+		setInterval(function () {
+			if (cp != null && coordEl) {
+				coordEl.innerHTML = "X: " + cp.x.toFixed(2) + "<br>Y: " + -cp.z.toFixed(2) + "<br>Z: " + cp.y.toFixed(2);
+			}
+		}, 200);
+
+		function onMouseMove(event) {
+			if (isFocus) { event.preventDefault(); mouseX = event.clientX; mouseY = event.clientY; }
+		}
+
+		function onMouseDown(e) {
+			e = e || window.event;
+			if (e.button == 0) { lastClick = { time: Date.now(), clientX: e.clientX, clientY: e.clientY }; }
+		}
+
+		function onMouseUp(e) {
+			e = e || window.event;
+			if (e.button == 0) {
+				var hit = nearestPlayer(e.clientX, e.clientY);
+				if (hit) {
+					window.parent.postMessage({
+						type: 'playerSelected',
+						player: { id: hit.userData.playerId, name: hit.userData.playerName }
+					}, '*');
+					return;
+				}
+			}
+		}
+
+		function screenGroundPoint(clientX, clientY) {
+			if (!camera || !renderer) return null;
+			var rect = renderer.domElement.getBoundingClientRect();
+			navMouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+			navMouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+			navRaycaster.setFromCamera(navMouse, camera);
+			if (!navRaycaster.ray.intersectPlane(groundPlane, planeHit)) return null;
+			return planeHit.clone();
+		}
+		function moveCameraOnGround(dx, dy) {
+			var forward = new THREE.Vector3(); camera.getWorldDirection(forward); forward.y = 0; if (forward.lengthSq() < 0.0001) forward.set(0, 0, -1); forward.normalize();
+			var right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+			var move = new THREE.Vector3(); move.addScaledVector(right, dx * RIGHT_PAN_SPEED); move.addScaledVector(forward, -dy * RIGHT_PAN_SPEED);
+			camera.position.add(move); controls.target.add(move); controls.update();
+		}
+		function panFromMouseAnchor(clientX, clientY) {
+			if (!navDrag || !navDrag.anchor) return false;
+			var current = screenGroundPoint(clientX, clientY); if (!current) return false;
+			var move = new THREE.Vector3().subVectors(navDrag.anchor, current); move.multiplyScalar(RIGHT_PAN_SPEED);
+			camera.position.add(move); controls.target.add(move); controls.update(); return true;
+		}
+		function panFromTouchAnchor(clientX, clientY) {
+			if (!navTouch || !navTouch.anchor) return false;
+			var current = screenGroundPoint(clientX, clientY); if (!current) return false;
+			var move = new THREE.Vector3().subVectors(navTouch.anchor, current); move.multiplyScalar(RIGHT_PAN_SPEED);
+			camera.position.add(move); controls.target.add(move); controls.update(); return true;
+		}
+		function touchCenter(touches) {
+			var a = touches[0], b = touches[1];
+			return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+		}
+		function touchDistance(touches) {
+			var a = touches[0], b = touches[1];
+			var dx = b.clientX - a.clientX;
+			var dy = b.clientY - a.clientY;
+			return Math.sqrt(dx * dx + dy * dy);
+		}
+		function zoomFromTouch(delta) {
+			if (!camera || !controls || Math.abs(delta) < 0.25) return;
+			var toTarget = new THREE.Vector3().subVectors(controls.target, camera.position);
+			var currentDistance = toTarget.length();
+			if (currentDistance < 1) return;
+			toTarget.normalize();
+			var nextDistance = Math.max(500, Math.min(15000, currentDistance - delta * 8));
+			camera.position.copy(controls.target).addScaledVector(toTarget, -nextDistance);
+			controls.update();
+
+		}
+		function onNavMouseDown(e) { if (e.button !== 2) return; e.preventDefault(); e.stopPropagation(); navDrag = { x: e.clientX, y: e.clientY, anchor: screenGroundPoint(e.clientX, e.clientY) }; }
+		function onNavMouseMove(e) { if (!navDrag) return; e.preventDefault(); e.stopPropagation(); var dx = e.clientX - navDrag.x; var dy = e.clientY - navDrag.y; if (!panFromMouseAnchor(e.clientX, e.clientY)) moveCameraOnGround(dx, dy); navDrag.x = e.clientX; navDrag.y = e.clientY; }
+		function onNavMouseUp(e) { if (!navDrag) return; if (e.button === 2) { e.preventDefault(); e.stopPropagation(); navDrag = null; } }
+		function onNavTouchStart(e) {
+			if (!isFocus || e.touches.length !== 2) return;
+			e.preventDefault(); e.stopPropagation();
+			var center = touchCenter(e.touches);
+			navTouch = { x: center.x, y: center.y, distance: touchDistance(e.touches), anchor: screenGroundPoint(center.x, center.y) };
+		}
+		function onNavTouchMove(e) {
+			if (!navTouch || e.touches.length !== 2) return;
+			e.preventDefault(); e.stopPropagation();
+			var center = touchCenter(e.touches);
+			var distance = touchDistance(e.touches);
+			var dx = center.x - navTouch.x;
+			var dy = center.y - navTouch.y;
+			if (panFromTouchAnchor(center.x, center.y)) { /* panned */ }
+			else { moveCameraOnGround(dx, dy); }
+			zoomFromTouch(distance - navTouch.distance);
+			navTouch.x = center.x;
+			navTouch.y = center.y;
+			navTouch.distance = distance;
+		}
+		function onNavTouchEnd(e) {
+			if (e.touches.length < 2) navTouch = null;
+		}
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			dirtyRender = true;
+		}
+
+		function onKeyboardEvent(e) {
+			if (e.code === 'KeyL') {
+				lighting = !lighting;
+				if (lighting) {
+					ambient.intensity = 0.25; scene.add(keyLight); scene.add(fillLight); scene.add(backLight);
+				} else {
+					ambient.intensity = 0.6; scene.remove(keyLight); scene.remove(fillLight); scene.remove(backLight);
+				}
+				dirtyRender = true;
+
+			}
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+			var now = performance.now();
+			var dt = Math.min(now - lastFrameTime, 100);
+			lastFrameTime = now;
+
+			controls.target.x = Math.max(-8000, Math.min(8000, controls.target.x));
+			controls.target.z = Math.max(-9000, Math.min(9000, controls.target.z));
+
+			controls.update();
+			tickLerps(dt);
+			updateLabels();
+
+			renderer.render(scene, camera);
+		}
+
+		function updateLabels() {
+			for (var i = 0; i < markList.length; i++) { markList[i].lookAt(camera.position); }
+
+		}
+
+		function mouseCheck() {
+			if (mouseX == oldMouseX && mouseY == oldMouseY) return;
+			oldMouseX = mouseX; oldMouseY = mouseY;
+			mouse.set((mouseX / window.innerWidth) * 2 - 1, -(mouseY / window.innerHeight) * 2 + 1);
+			raycaster.setFromCamera(mouse, camera);
+			if (raycaster.ray.intersectPlane(groundPlane, planeHit)) {
+				cp = planeHit.clone();
+				window.worldPos = cp;
+			}
+		}
+
+		function render() { }
+	</script>
+</body>
+
+</html>

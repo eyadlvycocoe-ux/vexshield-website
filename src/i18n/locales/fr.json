@@ -1,0 +1,639 @@
+{
+  "common": {
+    "brand": "VexShield",
+    "beta": "V1",
+    "languageAria": "Choisir la langue",
+    "cancel": "Cancel",
+    "copy": "Copy"
+  },
+  "languages": {
+    "en": "English",
+    "ar": "العربية",
+    "hu": "Magyar",
+    "nl": "Nederlands",
+    "ko": "한국어",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch",
+    "it": "Italiano",
+    "pt": "Português",
+    "cs": "Čeština"
+  },
+  "nav": {
+    "home": "Accueil",
+    "features": "Fonctions",
+    "pricing": "Tarifs",
+    "faqs": "FAQs",
+    "api": "Documentation"
+  },
+  "auth": {
+    "logoutSuccess": "Déconnexion réussie",
+    "myServers": "Mes serveurs",
+    "logout": "Déconnexion",
+    "signIn": "Connexion"
+  },
+  "sidebar": {
+    "dashboard": "Tableau de bord",
+    "download": "Télécharger",
+    "players": "Joueurs",
+    "search": "Recherche",
+    "map": "Carte",
+    "liveView": "Vue directe",
+    "warns": "Avertissements",
+    "kicks": "Expulsions",
+    "bans": "Bannissements",
+    "blacklistDetections": "Blacklist",
+    "airscanner": "AirScanner",
+    "licenseKeys": "Licences",
+    "checkResults": "Résultats",
+    "console": "Console",
+    "resources": "Ressources",    "admins": "Admins",
+    "activityLog": "Logs",
+    "settings": "Paramètres",
+    "moderation": "Modération",
+    "scanner": "Scanner",
+    "pcchecker": "PC Checker",
+    "management": "Gestion",
+    "analytics": "Analytique",
+    "graph": "Graphe",
+    "list": "Liste",
+    "trustScore": "Score de confiance",
+    "myPins": "Mes PIN",
+    "serverPanel": "Panneau serveur",
+    "whitelistAdmin": "Admin whitelist",
+    "users": "Utilisateurs",
+    "servers": "Serveurs",
+    "demoMode": "Mode démo",
+    "notConnected": "Non connecté",
+    "supportDiscord": "Discord support"
+  },
+  "hero": {
+    "badge": "Solution Anticheat Avancée",
+    "titleLine1": "Protégez votre serveur",
+    "titleHighlight": "comme une forteresse",
+    "description": "La suite ultime d'anticheat et de gestion pour les serveurs FiveM. VexShield protège contre les menus de mod, les backdoors et les attaques par flood avec un impact nul sur les performances.",
+    "interactiveDemo": "Démo Interactive",
+    "pricingBtn": "Voir les Tarifs",
+    "partnersLabel": "Approuvé par les plus grands serveurs :",
+    "dashboardAlt": "Prévisualisation du Dashboard VexShield"
+  },
+  "stats": {
+    "servers": "Serveurs Actifs",
+    "bans": "Bannissements Émis"
+  },
+  "revolution": {
+    "verticalLogoAlt": "Logo Revolution",
+    "titleLine1": "Rejoignez la révolution",
+    "titleLine2": "de la Protection",
+    "yearExperience": "Année d'expérience en sécurité",
+    "serversProtected": "Serveurs protégés dans le monde",
+    "bansIssued": "Bannissements émis par notre système",
+    "getStarted": "Commencer Maintenant",
+    "joinDiscord": "Rejoindre notre Discord"
+  },
+  "features": {
+    "sectionLabel": "Protection Fondamentale",
+    "sectionTitle": "Tout ce dont vous avez besoin pour sécuriser votre communauté",
+    "sectionSubtitle": "Des outils puissants conçus par des propriétaires de serveurs pour des propriétaires de serveurs. Arrêtez les tricheurs et protégez votre investissement avec facilité.",
+    "spotlightBadge": "Moteur Anticheat",
+    "spotlightTitle": "Arrêtez 99% des menus de mod instantanément",
+    "spotlightDesc": "Notre moteur anticheat s'exécute sur le client et le serveur pour détecter toute injection de mémoire non autorisée. Aucune configuration requise, installez-le et profitez de la tranquillité d'esprit.",
+    "spotlightItem1": "Scan de signature en temps réel pour tous les menus populaires.",
+    "spotlightItem2": "Bannissements globaux basés sur l'ID matériel (HWID).",
+    "tryDemo": "Essayer la démo interactive",
+    "iframeTitle": "Présentation d'VexShield",
+    "watchYoutube": "Voir la présentation sur YouTube"
+  },
+  "featureCategories": [
+    {
+      "title": "Anticheat Universel",
+      "description": "Arrête presque tous les menus et exécuteurs du marché.",
+      "items": [
+        "Détection de signature",
+        "Scan mémoire",
+        "Blocage d'exécuteur"
+      ]
+    },
+    {
+      "title": "Blacklist Globale",
+      "description": "Base de données partagée de tricheurs vérifiés sur tous les serveurs.",
+      "items": [
+        "Vérification HWID",
+        "Banns inter-serveurs",
+        "Mises à jour directes"
+      ]
+    },
+    {
+      "title": "Optimisation des Performances",
+      "description": "Impact minimal sur les FPS du serveur et les ressources client.",
+      "items": [
+        "Utilisation CPU faible",
+        "Vérifications asynchrones",
+        "Performance native"
+      ]
+    },
+    {
+      "title": "Suite de Gestion",
+      "description": "Tableau de bord complet pour gérer les joueurs, banns et kicks.",
+      "items": [
+        "Console en direct",
+        "Historique joueurs",
+        "Gestionnaire ressources"
+      ]
+    },
+    {
+      "title": "Scan Avancé",
+      "description": "Scans approfondis des backdoors cachés dans vos ressources.",
+      "items": [
+        "AirScanner",
+        "PC Checker",
+        "Reconnaissance de formes"
+      ]
+    }
+  ],
+  "airPcChecker": {
+    "sectionLabel": "Vérification PC",
+    "title": "Vérifiez les joueurs avec AirPC Checker",
+    "description": "Scannez en profondeur le PC d'un joueur à la recherche de logiciels de triche, de scripts et de traces de menus de mod précédemment utilisés. L'outil ultime pour les compétitions.",
+    "bullet1": "Scanne les processus cachés et clés de registre.",
+    "bullet2": "Détecte les traces de menus supprimés.",
+    "bullet3": "Journalisation complète des identifiants matériels.",
+    "productCaption": "Interface AirPC Checker",
+    "productAlt": "Prévisualisation de l'interface PC Checker"
+  },
+  "airEye": {
+    "sectionLabel": "Intégration Discord",
+    "title": "Surveillez votre serveur depuis Discord",
+    "description": "Air Eye est un puissant bot Discord qui se synchronise avec votre serveur de jeu pour fournir l'état en direct, les logs de bannissement et les alertes blacklist directement sur Discord.",
+    "bullet1": "Alertes instantanées pour les détections de blacklist.",
+    "bullet2": "Consultation de l'historique joueur via commandes Discord.",
+    "bullet3": "Synchronisation des banns avec vos rôles Discord.",
+    "addToDiscord": "Ajouter à Discord",
+    "productCaption": "Alertes Discord Air Eye",
+    "productAlt": "Prévisualisation du bot Discord"
+  },
+  "airScanner": {
+    "bundleIntro": "Fait partie de notre pack de sécurité premium, conçu pour trouver ce que les autres manquent.",
+    "sectionLabel": "Analyse de Ressources",
+    "title": "Nettoyez vos ressources avec AirScanner",
+    "description": "La plupart des ressources gratuites contiennent des backdoors cachés. AirScanner scanne automatiquement vos fichiers à la recherche de code obfusqué et de déclencheurs distants.",
+    "bullet1": "Analyse approfondie du code pour tous les fichiers .lua et .js.",
+    "bullet2": "Détecte le chargement distant de scripts externes.",
+    "bullet3": "Identifie les déclencheurs admin cachés.",
+    "productCaption": "Vue Détection AirScanner",
+    "productAlt": "Interface de Scan",
+    "resultsCaption": "Résultats de Scan Détaillés",
+    "resultsAlt": "Prévisualisation des résultats"
+  },
+  "feedback": {
+    "clientsTitle": "Ce que nos clients disent",
+    "clientsSubtitle": "Approuvé par plus de 100 propriétaires de serveurs professionnels.",
+    "emptyState": "Soyez le premier à laisser un avis !",
+    "memberFeedback": "Membre Vérifié"
+  },
+  "feedbackForm": {
+    "title": "Partagez votre expérience",
+    "loginPrompt": "Vous devez être connecté pour envoyer un avis.",
+    "login": "Connexion avec Discord",
+    "ownersOnly": "Seuls les propriétaires licenciés peuvent envoyer un avis.",
+    "submittingAs": "Envoi en tant que",
+    "placeholder": "Écrivez votre avis ici... (minimum 10 caractères)",
+    "rating": "Votre Note :",
+    "submitting": "Envoi en cours...",
+    "submit": "Envoyer l'avis"
+  },
+  "pricing": {
+    "homeSectionTitle": "Choisissez votre protection",
+    "mostPopular": "Le plus populaire",
+    "purchase": "Commander",
+    "noPlansFound": "Aucun pack trouvé pour le moment.",
+    "helpTitle": "À propos de nos packs"
+  },
+  "footer": {
+    "tagline": "La nouvelle génération de sécurité et de gestion pour serveurs FiveM. Protégez votre investissement avec une technologie de pointe.",
+    "navigation": "Navigation",
+    "documentation": "Documentation",
+    "terms": "Conditions",
+    "privacy": "Confidentialité",
+    "refund": "Remboursement",
+    "support": "Support/Appels",
+    "legal": "Légal",
+    "airEye": "Système Air Eye",
+    "copyright": "© {{year}} VexShield. Tous droits réservés."
+  },
+  "profile": {
+    "settings": "Paramètres Profil",
+    "displayName": "Nom affiché",
+    "bio": "Bio",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "wallet": "Portefeuille",
+    "redeem": "Utiliser un code",
+    "sessions": "Sessions récentes",
+    "loggedAt": "Connecté à",
+    "device": "Appareil",
+    "location": "Localisation"
+  },
+  "support": {
+    "title": "Centre de Support",
+    "subtitle": "Support technique et appels",
+    "category": "Catégorie",
+    "subject": "Sujet",
+    "message": "Message",
+    "submit": "Envoyer",
+    "submitting": "Envoi...",
+    "appealAlert": "Réservé aux joueurs blacklistés.",
+    "blacklistAppeal": "Appel",
+    "buyInfo": "Aide Paiement",
+    "generalSupport": "Support"
+  },
+  "addFunds": {
+    "title": "Ajouter des Fonds",
+    "subtitle": "Rechargez votre portefeuille",
+    "currentBalance": "Solde actuel",
+    "amount": "Montant",
+    "selectAmount": "Choisir ou saisir montant",
+    "checkout": "Payer",
+    "processing": "Traitement...",
+    "success": "Fonds ajoutés !",
+    "error": "Échec paiement"
+  },
+  "downloads": {
+    "title": "Téléchargements",
+    "subtitle": "Versions récentes",
+    "activeVersion": "Version Active",
+    "size": "Taille",
+    "downloaded": "Téléchargé",
+    "accessDenied": "Licence requise.",
+    "downloadNow": "Télécharger",
+    "noFiles": "Aucun fichier"
+  },
+  "pricingPage": {
+    "title": "Offres Produits",
+    "subtitle": "Choisissez votre protection",
+    "popular": "Populaire",
+    "monthly": "Mensuel",
+    "trimonthly": "3 Mois",
+    "lifetime": "À vie",
+    "loading": "Chargement...",
+    "purchase": "Acheter",
+    "oneTime": "One Time",
+    "subscription": "Subscription",
+    "billingToggleAria": "Switch billing mode",
+    "billingToggleHint": "Choose between one-time purchase and subscription plans"
+  },
+  "toast": {
+    "feedbackThanks": "Merci pour votre avis !",
+    "feedbackStub": "Avis erroné détecté",
+    "feedbackFailed": "Échec de l'envoi"
+  },
+  "ai": {
+    "title": "Air AI",
+    "subtitle": "Assistant Intelligent",
+    "newChat": "Nouvelle conversation",
+    "noConversations": "Aucune conversation",
+    "askAnything": "Demandez-moi tout sur les produits VexShield, les serveurs FiveM, le dépannage ou le développement.",
+    "placeholder": "Demandez à Air AI...",
+    "send": "Envoyer",
+    "thinking": "Réflexion...",
+    "memoryInfo": "L'IA se souvient du contexte entre les conversations",
+    "disclaimer": "Air AI peut faire des erreurs. Vérifiez les informations importantes.",
+    "suggestions": {
+      "setup": "Comment installer VexShield ?",
+      "subscription": "Vérifier mon abonnement",
+      "error": "Aidez-moi à corriger une erreur FiveM",
+      "scanner": "Expliquez comment fonctionne AirScanner"
+    },
+    "agents": {
+      "support": "Assistant support technique",
+      "developer": "Assistant développeur (FiveM/Lua/C#/Node)",
+      "anticheat": "Spécialiste anti-triche",
+      "billing": "Facturation et abonnements",
+      "sales": "Ventes et informations produits"
+    },
+    "admin": {
+      "title": "Admin Air AI",
+      "description": "Gérer les paramètres IA, les agents et les analyses",
+      "settings": "Paramètres",
+      "agents": "Agents",
+      "conversations": "Conversations",
+      "knowledge": "Base de connaissances",
+      "localAI": "IA Locale",
+      "messages30d": "Messages (30j)",
+      "cost30d": "Coût (30j)",
+      "tokens30d": "Tokens (30j)",
+      "serverStatus": "État du serveur",
+      "connected": "Connecté",
+      "unreachable": "Inaccessible",
+      "notConfigured": "Non configuré",
+      "selfHosted": "100% auto-hébergé — Aucune API externe",
+      "installedModels": "Modèles installés",
+      "downloadModel": "Télécharger un modèle",
+      "pullPlaceholder": "ex: llama3.1:8b, qwen2.5:7b, mistral:7b",
+      "recommendedModels": "Modèles recommandés",
+      "setupGuide": "Guide d'installation rapide",
+      "modelsInstalled": "{{count}} modèle(s) installé(s)"
+    },
+    "errors": {
+      "failedCreate": "Échec de la création",
+      "failedSend": "Échec de l'envoi",
+      "disabled": "L'IA est désactivée",
+      "tryAgain": "Veuillez réessayer"
+    }
+  },
+  "dashboard": {
+    "common": {
+      "invalidServerConnection": "Connexion serveur invalide",
+      "connectToServerFirst": "Veuillez d’abord connecter un serveur",
+      "missingLicenseKey": "Clé de licence manquante. Reconnectez le serveur.",
+      "serverNoLongerExists": "Le serveur n’existe plus",
+      "licenseExpired": "La licence de ce serveur a expiré. Vous avez été déconnecté.",
+      "verifyConnectionFailed": "Impossible de vérifier la connexion au serveur",
+      "serverNotFound": "Serveur introuvable",
+      "serverNotFoundDescription": "Le serveur recherché n’existe pas.",
+      "goHome": "Accueil",
+      "retry": "Réessayer",
+      "temporaryServerError": "Impossible de joindre le serveur pour le moment. Réessayez.",
+      "noAccess": "Vous n’avez pas accès à cette page",
+      "pcTrialNoAccess": "Cette page n’est pas incluse dans votre essai PC Checker",
+      "loadingServerData": "Chargement des données du serveur...",
+      "tooManyRequests": "Trop de requêtes",
+      "tooManyRequestsDescription": "Le tableau de bord actualise les données trop vite. Attendez une minute puis réessayez.",
+      "couldNotLoadDashboard": "Impossible de charger le tableau de bord"
+    },
+    "search": {
+      "enterQuery": "Enter Discord ID, license, or username",
+      "invalidQuery": "Enter a valid Discord ID, license hash, or username",
+      "lookupFailed": "Lookup failed",
+      "timedOut": "Search timed out. Try again.",
+      "searchFailed": "Search failed",
+      "newSearch": "← New Search",
+      "placeholder": "Discord ID, license hash, or username",
+      "button": "Search",
+      "lookingUp": "Looking up player...",
+      "noMatch": "No player matched",
+      "noMatchHint": "Try a Discord snowflake ID, FiveM license hash, or exact username.",
+      "syncingBanData": "Syncing full ban data..."
+    },
+    "bans": {
+      "filtersTitle": "Filters & Search",
+      "filtersSubtitle": "Search and filter bans by Ban ID, reason, or player name",
+      "banOffline": "Ban offline",
+      "searchPlaceholder": "Search by Ban ID, reason, or player name...",
+      "sortBanIdAsc": "Ban ID: low to high",
+      "sortBanIdDesc": "Ban ID: high to low",
+      "sortNewest": "Newest First",
+      "sortOldest": "Oldest First",
+      "recordsTitle": "Ban Records",
+      "totalFound": "{{count}} total bans found",
+      "noBans": "No bans found",
+      "player": "Player",
+      "banId": "Ban ID",
+      "reason": "Reason",
+      "evidence": "Evidence",
+      "status": "Status",
+      "bannedAt": "Banned At",
+      "firstJoin": "First Join",
+      "actions": "Actions",
+      "unbanPlayer": "Unban Player",
+      "unbanConfirm": "Are you sure you want to unban {{player}}?"
+    }
+  },
+  "serverManager": {
+    "addServer": "Ajouter un serveur",
+    "servers": "Serveurs ({{count}})",
+    "title": "Gestion des serveurs",
+    "description": "Gérez vos serveurs VexShield connectés",
+    "active": "Actif",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté",
+    "apiEndpoint": "Point API",
+    "players": "{{count}}/{{max}} joueurs",
+    "uptime": "Disponibilité"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer lu",
+    "empty": "Aucune notification."
+  },
+  "launchOffer": {
+    "close": "Close launch offer",
+    "leftTitle": "Launch version is almost ready.",
+    "dropTitle": "Temporary Launch Drop",
+    "dropDescription": "Early visitors will unlock the V1 launch discount after release.",
+    "badge": "V1 Launch Offer",
+    "afterLaunch": "After Launch",
+    "description": "This is a pre-launch notice only. The discount will become available when VexShield V1 officially launches.",
+    "launchesIn": "VexShield V1 launches in",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "launchCode": "Launch code",
+    "locked": "Locked",
+    "viewPlans": "View Launch Plans",
+    "checkLater": "I will check later"
+  },
+  "authPage": {
+    "accessDenied": "This Discord account is not allowed to sign in.",
+    "signInFailed": "Failed to sign in with Discord",
+    "title": "Welcome Back",
+    "subtitle": "Enter your Discord account to access your VexShield dashboard.",
+    "alreadyLoggedIn": "You are already logged in on the website.",
+    "confirmAppHandoff": "Press confirm to send the login to the Android app.",
+    "confirmOpenApp": "Confirm and open app",
+    "agreePrefix": "I agree to the",
+    "terms": "Terms",
+    "privacy": "Privacy Policy",
+    "and": "and",
+    "refund": "Refund Policy",
+    "connecting": "Connecting...",
+    "continueDiscord": "Continue with Discord",
+    "openDesktop": "Open in Desktop App",
+    "needHelp": "Need help?",
+    "signInLegal": "By signing in, you agree to our Terms of Service and Privacy Policy",
+    "showcaseMember": "Member joins community",
+    "showcaseWelcome": "Welcome to VexShield community",
+    "workflowTriggered": "Workflow triggered",
+    "applyTags": "Apply tags",
+    "addToSpaces": "Add to spaces",
+    "rsvpEvent": "RSVP to event",
+    "showcaseDescription": "Experience professional Discord security tools and master server protection."
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "subtitle": "Trouvez des réponses aux questions courantes sur VexShield",
+    "viewDocs": "View Docs",
+    "stillQuestions": "Still have questions?",
+    "supportPrompt": "Cannot find what you are looking for? Our support team is here to help.",
+    "joinDiscord": "Join Discord",
+    "readDocumentation": "Read Documentation",
+    "categories": [
+      {
+        "title": "Getting Started",
+        "faqs": [
+          {
+            "question": "What is VexShield?",
+            "answer": "VexShield is a comprehensive anti-cheat solution designed for FiveM servers with real-time monitoring, intelligent detections, and a web dashboard."
+          },
+          {
+            "question": "How do I install VexShield?",
+            "answer": "Buy a license, download the resource from your dashboard, upload it to resources, add ensure airshield to server.cfg, configure your IP and license key, then restart."
+          },
+          {
+            "question": "Do I need technical knowledge?",
+            "answer": "Basic FiveM knowledge helps, but the dashboard is designed to be simple. Documentation and Discord support are available."
+          }
+        ]
+      },
+      {
+        "title": "Features",
+        "faqs": [
+          {
+            "question": "How does VexShield detect cheaters?",
+            "answer": "It uses behavior analysis, signature checks, injection detection, resource monitoring, and network analysis."
+          },
+          {
+            "question": "Can I customize protections?",
+            "answer": "Yes. You can enable protections, choose actions, configure blacklists, sensitivity, and webhook notifications."
+          },
+          {
+            "question": "Does VexShield support Discord?",
+            "answer": "Yes. It supports Discord login, alerts, blacklist checks, and AirEye bot workflows."
+          }
+        ]
+      },
+      {
+        "title": "Billing & Support",
+        "faqs": [
+          {
+            "question": "Can I get a refund?",
+            "answer": "New customers can request a refund according to the refund policy."
+          },
+          {
+            "question": "What support is available?",
+            "answer": "Support is available through Discord, documentation, and staff assistance."
+          },
+          {
+            "question": "Can I extend my license?",
+            "answer": "Yes. Renewals are manual and add full time to your license."
+          }
+        ]
+      }
+    ]
+  },
+  "planDetails": {
+    "signInFirst": "Sign in first",
+    "invalidCoupon": "Invalid coupon",
+    "couponAppliedToast": "Coupon applied: -{{amount}}",
+    "paypalLoadFailed": "Failed to load PayPal",
+    "failed": "Failed",
+    "purchaseComplete": "Purchase complete. Configure your new server in Profile.",
+    "signInAgain": "Sign in again to complete payment.",
+    "paymentUnavailable": "Payment service unavailable",
+    "createOrderFailed": "Could not create order",
+    "captureFailed": "Capture failed",
+    "paymentComplete": "Payment complete. Configure your new server in Profile.",
+    "paymentFailed": "Payment failed",
+    "paypalStartFailed": "PayPal could not start. Please reload the page and try again.",
+    "paypalInitFailed": "Failed to initialize PayPal",
+    "back": "Back",
+    "features": "Features",
+    "preferSeparate": "Prefer picking VexShield / AirScanner / AirPC separately?",
+    "openPricing": "Open pricing page",
+    "couponCode": "Coupon code",
+    "apply": "Apply",
+    "couponApplied": "Coupon {{code}} applied",
+    "planPrice": "Plan Price",
+    "sale": "Sale",
+    "yourFunds": "Your Funds",
+    "couponDiscount": "Coupon discount",
+    "useFunds": "Use my funds",
+    "totalToPay": "Total to Pay",
+    "loadingPayment": "Loading payment options...",
+    "paypalNotEnabled": "PayPal is not enabled on the API server. Configure PayPal credentials and restart the API.",
+    "processing": "Processing...",
+    "useFundsComplete": "Use funds and complete purchase"
+  },
+  "myServers": {
+    "signInRequired": "Please sign in to view your servers",
+    "loadFailed": "Failed to load servers",
+    "badge": "Dashboard",
+    "title": "My servers",
+    "globalTitle": "Global servers",
+    "description": "Servers you own and servers where you were added as an administrator appear here.",
+    "globalDescription": "Site administrator view: every server in the database.",
+    "global": "Global",
+    "loading": "Loading your servers...",
+    "noGlobalServers": "No servers in the database",
+    "noServers": "No servers yet",
+    "noGlobalHint": "There are no server rows to show.",
+    "noServersHint": "Purchase or claim a license, or ask an owner to add your email under Admins.",
+    "noMatches": "No matches",
+    "noMatchesHint": "Try changing search or filters. {{count}} servers hidden.",
+    "searchPlaceholder": "Search name, ID, owner email...",
+    "serverStatus": "Server status",
+    "allServers": "All servers",
+    "onlineOnly": "Online only",
+    "offlineOnly": "Offline only",
+    "withPlayers": "With players",
+    "sortBy": "Sort by",
+    "defaultOrder": "Default order",
+    "mostPlayers": "Most players online",
+    "fewestPlayers": "Fewest players online",
+    "showing": "Showing {{shown}} of {{total}}",
+    "owner": "Owner",
+    "adminAccess": "Admin access",
+    "other": "Other",
+    "removalPending": "Removal pending",
+    "playersOnline": "players online",
+    "disabledPending": "This license is disabled pending staff action. Use",
+    "openDashboard": "Open dashboard"
+  },
+  "pcchecker": {
+    "loadPinsFailed": "Failed to load pins",
+    "copied": "{{label}} copied",
+    "copyFailed": "Copy failed",
+    "deleteFailed": "Delete failed",
+    "pinRemoved": "Pin removed",
+    "myPins": "My Pins",
+    "subtitle": "Create scan links, track live progress, and review anticheat results with ease.",
+    "createNewPin": "Create New Pin",
+    "searchPlaceholder": "Search by pin code or name...",
+    "allStatus": "All Status",
+    "refresh": "Refresh",
+    "loadingPins": "Loading pins...",
+    "noPins": "No pins yet",
+    "noMatchingPins": "No matching pins",
+    "noPinsHint": "Create your first scan pin to share Air.ac with a player and start monitoring.",
+    "noMatchingHint": "Try adjusting your search or filter to find what you are looking for.",
+    "createFirstPin": "Create Your First Pin",
+    "private": "Private",
+    "public": "Public",
+    "liveScan": "Live Scan",
+    "viewResults": "View Results",
+    "copyPinCode": "Copy Pin Code",
+    "copyDownloadUrl": "Copy Download URL",
+    "deletePin": "Delete Pin",
+    "createScanPin": "Create Scan Pin",
+    "pinNamePlaceholder": "e.g., Player nickname or case ID",
+    "privatePin": "Private Pin",
+    "privatePinHint": "Only visible to your team members",
+    "createPin": "Create Pin",
+    "pinCreated": "Pin Created Successfully!",
+    "downloadUrl": "Download URL",
+    "hardMode": "Hard Mode"
+  },
+  "docs": {
+    "brand": "VexShield Docs",
+    "documentation": "Documentation",
+    "lastModified": "Last modified {{date}}",
+    "searchDocs": "Search docs...",
+    "previous": "Previous",
+    "next": "Next",
+    "docs": "Docs",
+    "onThisPage": "On this page",
+    "copyCode": "Copy code",
+    "copied": "Copied"
+  }
+}

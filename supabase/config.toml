@@ -1,0 +1,4 @@
+project_id = "ryajrixmchazddlepokk"
+
+[functions.check-discord-guild]
+verify_jwt = false
