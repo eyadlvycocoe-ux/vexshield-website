@@ -48,6 +48,9 @@ export function getApiBaseUrl(): string {
     return String(import.meta.env.VITE_API_URL).replace(/\/$/, "");
   }
   if (typeof window !== "undefined" && window.location?.origin) {
+    if (window.location.hostname.endsWith("github.io")) {
+      return (import.meta.env.VITE_API_URL || "https://vexshield-backend.onrender.com/api").replace(/\/$/, "");
+    }
     return `${window.location.origin}/api`;
   }
   return (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
