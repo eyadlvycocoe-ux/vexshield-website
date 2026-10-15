@@ -155,13 +155,20 @@ const DemoLayout = () => {
   );
 };
 
+const getAppBasename = () => {
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/vexshield-website")) {
+    return "/vexshield-website";
+  }
+  return "/";
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <BrowserRouter basename={getAppBasename()}>
           <SEOHelmet />
           <RouteErrorBoundary>
             <UserAuthProvider>
