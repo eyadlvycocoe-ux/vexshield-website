@@ -104,5 +104,10 @@
   },
   "optionalDependencies": {
     "@esbuild/win32-x64": "^0.21.5"
+  },
+  "overrides": {
+    "react-day-picker": {
+      "date-fns": "-fns"
+    }
   }
 }
