@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port 5000",
     "start": "vite preview --port 5000 --host",
-    "prebuild": "node scripts/ensure-deps.mjs && node scripts/fetch-logo.js && node sync.js --pull",
+    "prebuild": "node scripts/fetch-logo.js",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
