@@ -56,6 +56,7 @@ export default defineConfig(({ mode }) => {
   const apiProxy = env.VITE_DEV_API_PROXY || 'http://127.0.0.1:5001';
 
   return {
+    base: process.env.VITE_BASE || './',
     preview: {
         host: true,
         port: 5000,
