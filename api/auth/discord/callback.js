@@ -1,5 +1,5 @@
-const mysql = require('mysql2/promise');
-const jwt = require('jsonwebtoken');
+import mysql from 'mysql2/promise';
+import jwt from 'jsonwebtoken';
 
 let pool = null;
 function getPool() {
@@ -19,7 +19,7 @@ function getPool() {
   return pool;
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const { code, state, error } = req.query;
   const proto = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers['x-forwarded-host'] || req.headers.host || 'vexshield-website.vercel.app';
@@ -112,4 +112,4 @@ module.exports = async (req, res) => {
     res.writeHead(302, { Location: `${baseClientUrl}/auth?error=server_error` });
     res.end();
   }
-};
+}

@@ -1,4 +1,4 @@
-module.exports = (req, res) => {
+export default function handler(req, res) {
   const clientId = process.env.DISCORD_CLIENT_ID || "1387345521768665199";
   const proto = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers["x-forwarded-host"] || req.headers.host || "vexshield-website.vercel.app";
@@ -11,4 +11,4 @@ module.exports = (req, res) => {
   
   res.writeHead(302, { Location: url });
   res.end();
-};
+}
