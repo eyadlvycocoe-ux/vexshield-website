@@ -1,5 +1,5 @@
 export default function handler(req, res) {
-  const clientId = process.env.DISCORD_CLIENT_ID || "1387345521768665199";
+  const clientId = process.env.DISCORD_CLIENT_ID || "1558602808511561758";
   const proto = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers["x-forwarded-host"] || req.headers.host || "vexshield-website.vercel.app";
   const redirectUri = process.env.DISCORD_REDIRECT_URI || `${proto}://${host}/api/auth/discord/callback`;

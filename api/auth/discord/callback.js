@@ -30,8 +30,8 @@ export default async function handler(req, res) {
     return res.end();
   }
 
-  const clientId = process.env.DISCORD_CLIENT_ID || '1387345521768665199';
-  const clientSecret = process.env.DISCORD_CLIENT_SECRET || Buffer.from('Sl94TGpnZG1EMWlNZEw1alkySnlTRDJsTVdSM3MwNm0=', 'base64').toString('ascii');
+  const clientId = process.env.DISCORD_CLIENT_ID || '1558602808511561758';
+  const clientSecret = process.env.DISCORD_CLIENT_SECRET || Buffer.from('QU04YW1RS09VbHhFTXVEU05rMk9IQ1VwWEllSW95UnY=', 'base64').toString('ascii');
   const redirectUri = process.env.DISCORD_REDIRECT_URI || `${baseClientUrl}/api/auth/discord/callback`;
 
   try {
