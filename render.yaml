@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: vexshield-discord-bot
+    env: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5055
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DB_HOST
+        value: mysql-2c01ccb3-eyadlaghnimi2012-de61.i.aivencloud.com
+      - key: DB_PORT
+        value: 21202
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: defaultdb
+      - key: DB_SSL
+        value: "true"
