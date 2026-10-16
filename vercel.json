@@ -8,10 +8,6 @@
       "destination": "/api/db.js?table=:table"
     },
     {
-      "source": "/api/servers/:serverId/airshield-config",
-      "destination": "/api/servers-airshield-config.js?serverId=:serverId"
-    },
-    {
       "source": "/api/functions/report",
       "destination": "/api/report.js?route=report"
     },
