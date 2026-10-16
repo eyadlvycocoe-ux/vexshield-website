@@ -290,12 +290,9 @@ export default function ProfileSettings() {
 
       
 
-      let discordRes = await fetch(apiUrl('/api/auth/profile'), {
+      let discordRes = await fetch(apiUrl('/api/auth/session?view=profile'), {
         credentials: 'include',
       });
-      if (!discordRes.ok) {
-        discordRes = await fetch(apiUrl('/api/discord-profile'), { credentials: 'include' });
-      }
 
       if (discordRes.ok) {
         const discordUser = (await discordRes.json()) as {
@@ -317,12 +314,9 @@ export default function ProfileSettings() {
         setFunds(toEurNumber(discordUser.funds));
       }
 
-      let serversRes = await fetch(apiUrl('/api/auth/servers'), {
+      let serversRes = await fetch(apiUrl('/api/auth/session?view=servers'), {
         credentials: 'include',
       });
-      if (!serversRes.ok) {
-        serversRes = await fetch(apiUrl('/api/dashboard-servers'), { credentials: 'include' });
-      }
 
       if (serversRes.ok) {
 

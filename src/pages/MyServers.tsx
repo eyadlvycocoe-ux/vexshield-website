@@ -172,13 +172,17 @@ export default function MyServers() {
       }
 
       let rows: DashboardServerRow[] = [];
-      try {
-        rows = await fetchJsonApi<DashboardServerRow[]>("/api/auth/servers");
-      } catch {
+      if (Array.isArray((user as any)?.servers) && (user as any).servers.length > 0) {
+        rows = (user as any).servers;
+      } else {
         try {
-          rows = await fetchJsonApi<DashboardServerRow[]>("/api/dashboard-servers");
+          rows = await fetchJsonApi<DashboardServerRow[]>("/api/auth/session?view=servers");
         } catch {
-          rows = await fetchJsonApi<DashboardServerRow[]>("/api/users/me/dashboard-servers");
+          try {
+            rows = await fetchJsonApi<DashboardServerRow[]>("/api/users/me/dashboard-servers");
+          } catch {
+            rows = [];
+          }
         }
       }
       const activeRows = (rows ?? []).filter((s) => !s.soft_deleted_at);
