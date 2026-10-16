@@ -290,55 +290,32 @@ export default function ProfileSettings() {
 
       
 
-      const discordRes = await fetch(apiUrl('/api/users/me/discord-profile'), {
-
+      const discordRes = await fetch(apiUrl('/api/discord-profile'), {
         credentials: 'include',
-
       });
 
       if (discordRes.ok) {
-
         const discordUser = (await discordRes.json()) as {
-
           bio?: string | null;
-
           username?: string | null;
-
           display_name?: string | null;
-
           funds?: number;
-
           tokens_total?: number;
-
           tokens_daily?: number;
-
           tokens_purchased?: number;
-
           daily_allowance?: number;
-
           plan_tier?: number;
-
           two_factor_enabled?: boolean;
-
         };
-
         setBio(discordUser.bio || '');
-
         if (!displayName && (discordUser.display_name || discordUser.username)) {
-
           setDisplayName(discordUser.display_name || discordUser.username || '');
-
         }
-
         setFunds(toEurNumber(discordUser.funds));
       }
 
-
-
-      const serversRes = await fetch(apiUrl('/api/users/me/dashboard-servers'), {
-
+      const serversRes = await fetch(apiUrl('/api/dashboard-servers'), {
         credentials: 'include',
-
       });
 
       if (serversRes.ok) {

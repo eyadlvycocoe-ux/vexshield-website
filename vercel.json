@@ -4,18 +4,6 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/users/me/dashboard-servers",
-      "destination": "/api/dashboard-servers"
-    },
-    {
-      "source": "/api/users/me/discord-profile",
-      "destination": "/api/discord-profile"
-    },
-    {
-      "source": "/api/auth/elevated-staff",
-      "destination": "/api/elevated-staff"
-    },
-    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
