@@ -51,6 +51,7 @@ import {
   Package,
   Bot,
   Headphones,
+  ShieldAlert,
 } from "lucide-react";
 import { RedeemKeyModal } from "@/components/RedeemKeyModal";
 import { AnimateIcon, type IconProps } from "@/components/AnimateIcon";
@@ -505,6 +506,15 @@ export function AppSidebar() {
                   <Server className="mr-2 h-4 w-4 text-blue-400" />
                   <span>My Servers</span>
                 </DropdownMenuItem>
+                {(user?.is_admin || user?.site_admin || ['1505242741091598418', '1134674389254803456', '1284209480824786987', '1339366537085321257'].includes(String(user?.id || ''))) && (
+                  <DropdownMenuItem
+                    className="cursor-pointer hover:bg-cyan-500/10 focus:bg-cyan-500/10 text-cyan-300 hover:text-cyan-200"
+                    onClick={() => navigate("/admin")}
+                  >
+                    <ShieldAlert className="mr-2 h-4 w-4 text-cyan-400" />
+                    <span>Admin Matrix</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="cursor-pointer hover:bg-cyan-500/10 focus:bg-cyan-500/10 text-zinc-200 hover:text-white"
                   onClick={() => window.open("https://discord.gg/5WgtMWbtgD", "_blank")}

@@ -45,7 +45,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getApiBaseUrl } from "@/lib/api-base";
+import { getApiBaseUrl, apiUrl, getStoredAuthToken } from "@/lib/api-base";
 import { useRequireSiteAdmin } from "@/hooks/useRequireSiteAdmin";
 import { PartnerApplicationsPanel } from "@/components/PartnerApplicationsPanel";
 import { cn } from "@/lib/utils";
@@ -162,6 +162,30 @@ export default function AdminDashboard() {
   };
 
   const loadTelemetryStats = async () => {
+    try {
+      const token = getStoredAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(apiUrl("/api/auth/session?view=stats"), {
+        credentials: "include",
+        cache: "no-store",
+        headers,
+      });
+      if (res.ok) {
+        const stats = await res.json();
+        setTelemetry({
+          servers: stats.servers ?? 0,
+          bans: stats.bans ?? 0,
+          users: stats.users ?? 0,
+          plans: stats.plans ?? 0,
+          loading: false,
+        });
+        return;
+      }
+    } catch {
+      /* fallback to supabase client */
+    }
+
     try {
       const [serversRes, bansRes, usersRes, plansRes] = await Promise.all([
         supabase.from("servers").select("id"),

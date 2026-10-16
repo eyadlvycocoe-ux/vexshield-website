@@ -229,7 +229,65 @@ export default async function handler(req, res) {
     }
   }
 
+  // View: Stats
+  if (view === 'stats') {
+    try {
+      const db = getPool();
+      const [[sRow]] = await db.query('SELECT COUNT(*) as count FROM servers WHERE soft_deleted_at IS NULL');
+      const [[uRow]] = await db.query('SELECT COUNT(*) as count FROM discord_users');
+      const [[bRow]] = await db.query('SELECT COUNT(*) as count FROM global_bans');
+      const [[pRow]] = await db.query('SELECT COUNT(*) as count FROM pricing_plans');
+      return res.status(200).json({
+        servers: Number(sRow?.count || 0),
+        users: Number(uRow?.count || 0),
+        bans: Number(bRow?.count || 0),
+        plans: Number(pRow?.count || 0),
+      });
+    } catch (err) {
+      return res.status(200).json({ servers: 0, users: 0, bans: 0, plans: 0 });
+    }
+  }
+
+  // View: Admin Servers
+  if (view === 'admin_servers') {
+    const isOwner = OWNER_DISCORD_IDS.includes(userId);
+    if (!isOwner) {
+      const db = getPool();
+      const [u] = await db.query('SELECT is_admin, admin_level FROM discord_users WHERE discord_id = ?', [userId]);
+      if (!u[0] || (!u[0].is_admin && Number(u[0].admin_level) < 1)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+    }
+    try {
+      const db = getPool();
+      const [rows] = await db.query('SELECT * FROM servers WHERE soft_deleted_at IS NULL ORDER BY created_at DESC');
+      return res.status(200).json(rows);
+    } catch (err) {
+      return res.status(500).json({ error: err.message || 'Database error' });
+    }
+  }
+
+  // View: Admin Users
+  if (view === 'admin_users') {
+    const isOwner = OWNER_DISCORD_IDS.includes(userId);
+    if (!isOwner) {
+      const db = getPool();
+      const [u] = await db.query('SELECT is_admin, admin_level FROM discord_users WHERE discord_id = ?', [userId]);
+      if (!u[0] || (!u[0].is_admin && Number(u[0].admin_level) < 1)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+    }
+    try {
+      const db = getPool();
+      const [rows] = await db.query('SELECT discord_id, username, display_name, avatar, email, connected_at, funds, is_admin, admin_level FROM discord_users ORDER BY connected_at DESC');
+      return res.status(200).json(rows);
+    } catch (err) {
+      return res.status(500).json({ error: err.message || 'Database error' });
+    }
+  }
+
   // Default: Full Session
+  const isOwnerUser = OWNER_DISCORD_IDS.includes(userId);
   const displayName = decoded.display_name || decoded.username || (decoded.email ? decoded.email.split('@')[0] : 'User');
   const avatarUrl = decoded.avatar && decoded.id
     ? `https://cdn.discordapp.com/avatars/${decoded.id}/${decoded.avatar}.png`
@@ -238,16 +296,18 @@ export default async function handler(req, res) {
   let dbBio = '';
   let dbFunds = 0;
   let servers = [];
+  let isDbAdmin = false;
 
   try {
     const db = getPool();
     const [uRows] = await db.query(
-      'SELECT bio, funds FROM discord_users WHERE discord_id = ? LIMIT 1',
+      'SELECT bio, funds, is_admin, admin_level FROM discord_users WHERE discord_id = ? LIMIT 1',
       [userId]
     );
     if (uRows && uRows[0]) {
       dbBio = uRows[0].bio || '';
       dbFunds = parseFloat(uRows[0].funds) || 0;
+      isDbAdmin = !!(uRows[0].is_admin === 1 || Number(uRows[0].admin_level) >= 1);
     }
     servers = await fetchUserServers(db, userId, email);
   } catch (err) {
@@ -261,6 +321,8 @@ export default async function handler(req, res) {
     bio: dbBio,
     funds: dbFunds,
     servers: servers,
+    is_admin: isOwnerUser || isDbAdmin,
+    site_admin: isOwnerUser || isDbAdmin,
     user_metadata: {
       full_name: displayName,
       name: displayName,

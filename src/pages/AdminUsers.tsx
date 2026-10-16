@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import { DiscordAvatar } from "@/components/DiscordAvatar";
 import { useRequireSiteAdmin } from "@/hooks/useRequireSiteAdmin";
-import { apiUrl, ensureMutationCsrf, apiMutationHeaders } from "@/lib/api-base";
+import { apiUrl, ensureMutationCsrf, apiMutationHeaders, getStoredAuthToken } from "@/lib/api-base";
 import { clearSiteStaffCache } from "@/lib/site-staff-cache";
 import { AssignStaffRoleModal, STAFF_ROLES } from "@/components/AssignStaffRoleModal";
 import { getRoleByLevel } from "@/lib/roles";
@@ -124,11 +124,24 @@ export default function AdminUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(apiUrl("/api/admin/discord-users"), {
+      const token = getStoredAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json", "X-AirCore-Client": "1" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      let res = await fetch(apiUrl("/api/auth/session?view=admin_users"), {
         credentials: "include",
         cache: "no-store",
-        headers: { Accept: "application/json", "X-AirCore-Client": "1" },
+        headers,
       });
+
+      if (!res.ok) {
+        res = await fetch(apiUrl("/api/admin/discord-users"), {
+          credentials: "include",
+          cache: "no-store",
+          headers,
+        });
+      }
+
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error((j as { error?: string }).error || "Failed to load users");

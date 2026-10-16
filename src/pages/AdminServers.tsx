@@ -12,7 +12,7 @@ import { Server, Trash2, Plus, ArrowLeft, Eye, EyeOff, Pencil, RefreshCw, Key, C
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireSiteAdmin } from "@/hooks/useRequireSiteAdmin";
-import { apiMutationHeaders, apiUrl, ensureCsrfCookie, getApiBaseUrl, isCsrfErrorMessage } from "@/lib/api-base";
+import { apiMutationHeaders, apiUrl, ensureCsrfCookie, getApiBaseUrl, isCsrfErrorMessage, getStoredAuthToken } from "@/lib/api-base";
 import { setConnectedServer } from "@/lib/connected-server";
 
 interface ServerConfig {
@@ -73,11 +73,24 @@ export default function AdminServers() {
 
   const loadServers = async () => {
     try {
-      const res = await fetch(apiUrl("/api/admin/servers"), {
+      const token = getStoredAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json", "X-AirCore-Client": "1" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      let res = await fetch(apiUrl("/api/auth/session?view=admin_servers"), {
         credentials: "include",
         cache: "no-store",
-        headers: { Accept: "application/json", "X-AirCore-Client": "1" },
+        headers,
       });
+
+      if (!res.ok) {
+        res = await fetch(apiUrl("/api/admin/servers"), {
+          credentials: "include",
+          cache: "no-store",
+          headers,
+        });
+      }
+
       const raw = await res.text();
       let serversData: ServerConfig[] = [];
       if (res.ok) {
