@@ -157,10 +157,12 @@ export function AppSidebar() {
   const isMyServersPage =
     currentPath === "/my-servers" ||
     currentPath === "/servers" ||
+    currentPath === "/profile-settings" ||
     (!serverId && !isDemoMode && (currentPath === "/configs-library" || currentPath === "/library" || currentPath === "/models" || currentPath === "/download"));
 
   const customerAreaItems: MenuItem[] = [
     { titleKey: "sidebar.dashboard", url: "/my-servers", icon: AnimatedLayoutGrid as unknown as AnimatedIcon, permission: "dashboard" },
+    { titleKey: "sidebar.profile", url: "/profile-settings", icon: UserRound as unknown as AnimatedIcon, permission: "dashboard" },
     { titleKey: "sidebar.redeem", url: "#redeem", icon: Key as unknown as AnimatedIcon, permission: "dashboard" },
     { titleKey: "sidebar.configLibrary", url: "/configs-library", icon: AnimatedFolder as unknown as AnimatedIcon, permission: "settings" },
     { titleKey: "sidebar.models", url: "/models", icon: AnimatedPackage as unknown as AnimatedIcon, permission: "settings" },
@@ -186,6 +188,7 @@ export function AppSidebar() {
     if (isMyServersPage) {
       if (path === "#redeem") return false;
       if (path === "/my-servers") return currentPath === "/my-servers" || currentPath === "/servers";
+      if (path === "/profile-settings") return currentPath === "/profile-settings";
       if (path === "/configs-library") return currentPath === "/configs-library" || currentPath === "/library";
       if (path === "/models") return currentPath === "/models";
     }
@@ -199,7 +202,7 @@ export function AppSidebar() {
     prefetchDashboardPage(dashboardPathSegment(url, baseUrl));
   };
 
-  const userName = getAuthUserName(user) || "Gizmo";
+  const userName = getAuthUserName(user) || user?.display_name || user?.username || (user?.email ? user.email.split('@')[0] : "Account");
   const userEmail = user?.email || "user@vexshield.com";
 
   const renderCollapsibleTreeGroup = (
@@ -400,7 +403,7 @@ export function AppSidebar() {
                           className="flex w-full items-center gap-2.5"
                         >
                           <Icon className={cn("size-4 shrink-0 transition-transform duration-300 group-hover/item:scale-125 group-hover/item:rotate-6", active ? "text-cyan-400" : "text-zinc-400 group-hover/item:text-cyan-300")} strokeWidth={1.8} />
-                          <span>{t(item.titleKey)}</span>
+                          <span>{t(item.titleKey, item.titleKey === "sidebar.profile" ? "Profile" : undefined)}</span>
                         </NavLink>
                       )}
                     </SidebarMenuButton>
@@ -478,31 +481,48 @@ export function AppSidebar() {
                 sideOffset={4}
               >
                 <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 text-left text-sm bg-cyan-950/30 rounded-t-lg border-b border-white/5">
                     <UserAvatar size="sm" />
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">{userName}</span>
-                      <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
+                      <span className="truncate font-semibold text-white">{userName}</span>
+                      <span className="truncate text-[11px] text-zinc-400">{userEmail}</span>
                     </div>
                     <NotificationBell />
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-white/5" />
                 <DropdownMenuItem
-                  className="cursor-pointer hover:bg-sidebar-accent focus:bg-sidebar-accent"
+                  className="cursor-pointer hover:bg-cyan-500/10 focus:bg-cyan-500/10 text-zinc-200 hover:text-white"
+                  onClick={() => navigate("/profile-settings")}
+                >
+                  <UserRound className="mr-2 h-4 w-4 text-cyan-400" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer hover:bg-cyan-500/10 focus:bg-cyan-500/10 text-zinc-200 hover:text-white"
+                  onClick={() => navigate("/my-servers")}
+                >
+                  <Server className="mr-2 h-4 w-4 text-blue-400" />
+                  <span>My Servers</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer hover:bg-cyan-500/10 focus:bg-cyan-500/10 text-zinc-200 hover:text-white"
                   onClick={() => window.open("https://discord.gg/5WgtMWbtgD", "_blank")}
                 >
-                  <HelpCircle className="mr-2 h-4 w-4 text-blue-400" />
+                  <HelpCircle className="mr-2 h-4 w-4 text-indigo-400" />
                   <span>Support Discord</span>
                 </DropdownMenuItem>
                 {user && (
-                  <DropdownMenuItem
-                    className="cursor-pointer text-destructive focus:text-destructive hover:bg-sidebar-accent focus:bg-sidebar-accent"
-                    onClick={() => userSignOut()}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log Out</span>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuSeparator className="bg-white/5" />
+                    <DropdownMenuItem
+                      className="cursor-pointer text-rose-400 focus:text-rose-300 hover:bg-rose-500/10 focus:bg-rose-500/10"
+                      onClick={() => userSignOut()}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log Out</span>
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

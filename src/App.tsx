@@ -195,7 +195,7 @@ const App = () => (
                         <Route path="/models" element={<Pages.Models />} />
                         <Route path="/library" element={<Pages.ConfigLibrary />} />
                         <Route path="/configs-library" element={<Pages.ConfigLibrary />} />
-                        <Route path="/profile-settings" element={<Navigate to="/my-servers" replace />} />
+                        <Route path="/profile-settings" element={<Pages.ProfileSettings />} />
                         <Route path="/terms" element={<Pages.Terms />} />
                         <Route path="/privacy" element={<Pages.Privacy />} />
                         <Route path="/refund" element={<Pages.Refund />} />

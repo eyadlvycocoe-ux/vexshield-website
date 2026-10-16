@@ -89,6 +89,7 @@ export default async function handler(req, res) {
         username: discordUser.username,
         email: discordUser.email,
         display_name: displayName,
+        avatar: discordUser.avatar || null,
         bio: dbUser.bio || '',
         funds: parseFloat(dbUser.funds) || 0,
       },

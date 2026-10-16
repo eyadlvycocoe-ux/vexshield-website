@@ -249,31 +249,46 @@ export function discordIdFromBanMetadata(
 /**
  * Get avatar URL from Supabase Discord auth user metadata
  */
-export function getAuthUserAvatar(user: { user_metadata?: Record<string, any> } | null): string | null {
-  if (!user?.user_metadata) return null;
+export function getAuthUserAvatar(user: any): string | null {
+  if (!user) return null;
+
+  // Direct avatar_url
+  if (user.avatar_url && typeof user.avatar_url === 'string') {
+    return user.avatar_url;
+  }
   
   const metadata = user.user_metadata;
-  
-  // Supabase stores full avatar URL in avatar_url
-  if (metadata.avatar_url) {
+  if (metadata?.avatar_url && typeof metadata.avatar_url === 'string') {
     return metadata.avatar_url;
   }
   
-  // Fallback: construct from provider_id and avatar
-  const discordId = metadata.provider_id || metadata.sub;
-  const avatarHash = metadata.avatar;
+  // Construct from discordId and avatar hash
+  const discordId = user.id || metadata?.provider_id || metadata?.sub;
+  const avatarHash = user.avatar || metadata?.avatar;
   
-  return getDiscordAvatarUrl(discordId, avatarHash);
+  if (discordId && avatarHash) {
+    return getDiscordAvatarUrl(String(discordId), String(avatarHash));
+  }
+  if (discordId) {
+    return getDiscordAvatarUrl(String(discordId), null);
+  }
+  return null;
 }
 
 /**
- * Get Discord username from auth metadata
+ * Get Discord username from auth metadata or user properties
  */
-export function getAuthUserName(user: { user_metadata?: Record<string, any> } | null): string | null {
-  if (!user?.user_metadata) return null;
+export function getAuthUserName(user: any): string | null {
+  if (!user) return null;
   
-  return user.user_metadata.full_name || 
-         user.user_metadata.name || 
-         user.user_metadata.custom_claims?.global_name ||
-         null;
+  return (
+    user.display_name ||
+    user.global_name ||
+    user.username ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.user_metadata?.custom_claims?.global_name ||
+    user.user_metadata?.user_name ||
+    (user.email ? user.email.split('@')[0] : null)
+  );
 }
