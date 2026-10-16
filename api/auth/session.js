@@ -116,9 +116,29 @@ async function fetchUserServers(db, userId, userEmail) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
 
+  const view = req.query?.view;
+
+  // View: Stats (Public Telemetry)
+  if (view === 'stats') {
+    try {
+      const db = getPool();
+      const [[sRow]] = await db.query('SELECT COUNT(*) as count FROM servers WHERE soft_deleted_at IS NULL');
+      const [[uRow]] = await db.query('SELECT COUNT(*) as count FROM discord_users');
+      const [[bRow]] = await db.query('SELECT COUNT(*) as count FROM global_bans');
+      const [[pRow]] = await db.query('SELECT COUNT(*) as count FROM pricing_plans');
+      return res.status(200).json({
+        servers: Number(sRow?.count || 0),
+        users: Number(uRow?.count || 0),
+        bans: Number(bRow?.count || 0),
+        plans: Number(pRow?.count || 0),
+      });
+    } catch (err) {
+      return res.status(200).json({ servers: 0, users: 0, bans: 0, plans: 0 });
+    }
+  }
+
   const decoded = getUser(req);
   if (!decoded || !decoded.id) {
-    const view = req.query?.view;
     if (view === 'staff') {
       return res.status(200).json({ site_admin: false, site_support: false });
     }
@@ -127,7 +147,6 @@ export default async function handler(req, res) {
 
   const userId = String(decoded.id);
   const email = String(decoded.email || '').trim().toLowerCase();
-  const view = req.query?.view;
 
   // View: Staff
   if (view === 'staff') {
@@ -229,24 +248,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // View: Stats
-  if (view === 'stats') {
-    try {
-      const db = getPool();
-      const [[sRow]] = await db.query('SELECT COUNT(*) as count FROM servers WHERE soft_deleted_at IS NULL');
-      const [[uRow]] = await db.query('SELECT COUNT(*) as count FROM discord_users');
-      const [[bRow]] = await db.query('SELECT COUNT(*) as count FROM global_bans');
-      const [[pRow]] = await db.query('SELECT COUNT(*) as count FROM pricing_plans');
-      return res.status(200).json({
-        servers: Number(sRow?.count || 0),
-        users: Number(uRow?.count || 0),
-        bans: Number(bRow?.count || 0),
-        plans: Number(pRow?.count || 0),
-      });
-    } catch (err) {
-      return res.status(200).json({ servers: 0, users: 0, bans: 0, plans: 0 });
-    }
-  }
+
 
   // View: Admin Servers
   if (view === 'admin_servers') {
