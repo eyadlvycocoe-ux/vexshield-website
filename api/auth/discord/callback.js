@@ -1,5 +1,12 @@
 import mysql from 'mysql2/promise';
-import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+
+function signJwt(payload, secret, expSec = 7 * 86400) {
+  const h = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const p = Buffer.from(JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + expSec })).toString('base64url');
+  const s = crypto.createHmac('sha256', secret).update(h + '.' + p).digest('base64url');
+  return `${h}.${p}.${s}`;
+}
 
 let pool = null;
 function getPool() {
@@ -83,7 +90,7 @@ export default async function handler(req, res) {
     const dbUser = rows[0] || {};
 
     const jwtSecret = process.env.JWT_SECRET || '014ba23d46efe965d33ff86030be6e71ad8fbe06b96ff813bdd769d0190a9d1c';
-    const token = jwt.sign(
+    const token = signJwt(
       {
         id: userId,
         username: discordUser.username,
@@ -93,8 +100,7 @@ export default async function handler(req, res) {
         bio: dbUser.bio || '',
         funds: parseFloat(dbUser.funds) || 0,
       },
-      jwtSecret,
-      { expiresIn: '7d' }
+      jwtSecret
     );
 
     const targetBase = state ? decodeURIComponent(String(state)) : `${baseClientUrl}/my-servers`;

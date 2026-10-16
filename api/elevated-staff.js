@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 let pool = null;
 function getPool() {
@@ -22,16 +22,28 @@ function getPool() {
 const JWT_SECRET = process.env.JWT_SECRET || '014ba23d46efe965d33ff86030be6e71ad8fbe06b96ff813bdd769d0190a9d1c';
 const OWNER_DISCORD_IDS = ['1505242741091598418', '1134674389254803456', '1284209480824786987', '1339366537085321257'];
 
+function verifyJwt(token, secret) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [h, p, s] = parts;
+  const expected = crypto.createHmac('sha256', secret).update(h + '.' + p).digest('base64url');
+  if (s !== expected) return null;
+  try {
+    const data = JSON.parse(Buffer.from(p, 'base64url').toString('utf8'));
+    if (data.exp && data.exp < Math.floor(Date.now() / 1000)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 function getUser(req) {
   const cookieHeader = req.headers.cookie || '';
   const match = cookieHeader.match(/(?:^|;\s*)(?:token|sb-aircore-token|airshield_auth_token)=([^;]+)/);
   const token = match ? decodeURIComponent(match[1]) : (req.headers.authorization?.replace(/^Bearer\s+/i, ''));
   if (!token) return null;
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch {
-    return null;
-  }
+  return verifyJwt(token, JWT_SECRET);
 }
 
 export default async function handler(req, res) {

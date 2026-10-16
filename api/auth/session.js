@@ -1,4 +1,20 @@
-import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+
+function verifyJwt(token, secret) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [h, p, s] = parts;
+  const expected = crypto.createHmac('sha256', secret).update(h + '.' + p).digest('base64url');
+  if (s !== expected) return null;
+  try {
+    const data = JSON.parse(Buffer.from(p, 'base64url').toString('utf8'));
+    if (data.exp && data.exp < Math.floor(Date.now() / 1000)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
 
 export default function handler(req, res) {
   const cookieHeader = req.headers.cookie || '';
@@ -11,7 +27,10 @@ export default function handler(req, res) {
 
   const jwtSecret = process.env.JWT_SECRET || '014ba23d46efe965d33ff86030be6e71ad8fbe06b96ff813bdd769d0190a9d1c';
   try {
-    const decoded = jwt.verify(token, jwtSecret);
+    const decoded = verifyJwt(token, jwtSecret);
+    if (!decoded) {
+      return res.status(401).json({ user: null });
+    }
     const displayName = decoded.display_name || decoded.username || (decoded.email ? decoded.email.split('@')[0] : 'User');
     const avatarUrl = decoded.avatar && decoded.id
       ? `https://cdn.discordapp.com/avatars/${decoded.id}/${decoded.avatar}.png`
