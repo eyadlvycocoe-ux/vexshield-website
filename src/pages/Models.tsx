@@ -3,7 +3,7 @@ import {
   Car, User, Zap, Package, Bomb, Search, Copy, Check, Grid3X3, List, ZoomIn, X, 
   ChevronLeft, ChevronRight, Layers, Home, Code, ExternalLink, Sparkles, 
   SlidersHorizontal, ArrowUpDown, Terminal, Shield, Eye, CheckCircle2,
-  Image as ImageIcon, HelpCircle, ArrowRight
+  Image as ImageIcon, HelpCircle, ArrowRight, Hash
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
