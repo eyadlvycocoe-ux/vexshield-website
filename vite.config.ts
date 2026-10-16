@@ -61,6 +61,9 @@ export default defineConfig(({ mode }) => {
         host: true,
         port: 5000,
         allowedHosts: [
+            "vexshield.site",
+            "www.vexshield.site",
+            "vexshield-website.vercel.app",
             "aircore.xyz",
             "www.aircore.xyz",
             "144.91.69.111",
