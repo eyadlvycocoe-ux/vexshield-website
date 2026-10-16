@@ -109,15 +109,33 @@ export default function Map() {
   const [playerFilterType, setPlayerFilterType] = useState<PlayerFilterType>("none");
   const [mapMode, setMapMode] = useState<MapMode>("2d");
 
+  const initialMapStyle = useRef(mapStyle).current;
+
   const postToMap = useCallback((payload: Record<string, unknown>) => {
-    const ref = mapMode === "3d" ? iframe3dRef : iframeRef;
-    ref.current?.contentWindow?.postMessage(payload, window.location.origin);
-  }, [mapMode]);
+    try {
+      iframeRef.current?.contentWindow?.postMessage(payload, "*");
+      iframe3dRef.current?.contentWindow?.postMessage(payload, "*");
+    } catch {}
+  }, []);
 
   const syncMapSettings = useCallback(() => {
     postToMap({ type: "setMapStyle", style: mapStyle });
     postToMap({ type: "setHeatmap", enabled: heatmapEnabled });
   }, [heatmapEnabled, mapStyle, postToMap]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MAP_STYLE_KEY, JSON.stringify(mapStyle));
+    } catch {}
+    postToMap({ type: "setMapStyle", style: mapStyle });
+  }, [mapStyle, postToMap]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(HEATMAP_KEY, JSON.stringify(heatmapEnabled));
+    } catch {}
+    postToMap({ type: "setHeatmap", enabled: heatmapEnabled });
+  }, [heatmapEnabled, postToMap]);
 
   const fetchPlayers = useCallback(async () => {
     if (isDemo) {
@@ -418,7 +436,7 @@ export default function Map() {
         >
           <iframe
             ref={iframeRef}
-            src={`/map/index.html?embed=1&style=${mapStyle}&v=${MAP_ASSET_VERSION}`}
+            src={`/map/index.html?embed=1&style=${initialMapStyle}&v=${MAP_ASSET_VERSION}`}
             title="2D Map"
             className="absolute inset-0 h-full w-full border-0"
             style={{ display: mapMode === "2d" ? "block" : "none" }}
