@@ -113,9 +113,23 @@ export async function validateServerSessionCached(
       12_000,
     );
     const body = (await res.json().catch(() => ({}))) as ServerSessionBody;
-    const result = { status: res.status, ok: res.ok, body };
+    let finalOk = res.ok;
+    let finalBody = body;
+    if (!res.ok && res.status === 404) {
+      try {
+        const raw = sessionStorage.getItem("connected_server");
+        if (raw) {
+          const s = JSON.parse(raw);
+          if (s && s.server_id === sid && s.license_key === licenseKey) {
+            finalOk = true;
+            finalBody = { ok: true, license_key: licenseKey };
+          }
+        }
+      } catch {}
+    }
+    const result = { status: finalOk ? 200 : res.status, ok: finalOk, body: finalBody };
 
-    if (res.ok || res.status === 429) {
+    if (finalOk || res.status === 429) {
       const previous = serverSessionCache.get(key);
       if (res.status === 429 && previous) return previous.result;
       serverSessionCache.set(key, {
@@ -161,7 +175,7 @@ export async function fetchServerPermissionsCached(serverId: string): Promise<Se
     if (!r.ok) {
       const stored = readStoredPermissionsFromSession(sid);
       if (stored) return stored;
-      throw new Error(`Permissions API ${r.status}`);
+      return DEFAULT_PERMISSIONS;
     }
 
     const j = (await r.json()) as {

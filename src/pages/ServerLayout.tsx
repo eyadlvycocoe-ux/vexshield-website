@@ -230,11 +230,28 @@ export default function ServerLayout() {
                 <div className="flex min-h-0 flex-1 flex-col">
                   <Suspense fallback={<PageLoader compact />}>
                     <Routes>
+                      <Route index element={<Navigate to="dashboard" replace />} />
+                      <Route
+                        path="dashboard"
+                        element={
+                          <RequirePageAccess page="dashboard">
+                            <Pages.ServerDashboard />
+                          </RequirePageAccess>
+                        }
+                      />
                       <Route
                         path="/dashboard"
                         element={
                           <RequirePageAccess page="dashboard">
                             <Pages.ServerDashboard />
+                          </RequirePageAccess>
+                        }
+                      />
+                      <Route
+                        path="analytics"
+                        element={
+                          <RequirePageAccess page="dashboard">
+                            <Pages.ServerAnalyticsPage />
                           </RequirePageAccess>
                         }
                       />

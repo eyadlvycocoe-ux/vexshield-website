@@ -4,6 +4,26 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/db/:table",
+      "destination": "/api/db.js?table=:table"
+    },
+    {
+      "source": "/api/auth/server-session",
+      "destination": "/api/auth/session.js?view=server_session"
+    },
+    {
+      "source": "/api/auth/server-permissions",
+      "destination": "/api/auth/session.js?view=server_permissions"
+    },
+    {
+      "source": "/api/users/me/dashboard-servers",
+      "destination": "/api/auth/session.js?view=servers"
+    },
+    {
+      "source": "/api/admin/servers",
+      "destination": "/api/auth/session.js?view=admin_servers"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

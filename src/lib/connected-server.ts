@@ -182,11 +182,10 @@ export async function recoverConnectedServerSession(serverId: string | undefined
 
 
   const lists = await Promise.allSettled([
-
+    fetchAccessibleServers("/auth/session?view=servers"),
+    fetchAccessibleServers("/auth/session?view=admin_servers"),
     fetchAccessibleServers("/users/me/dashboard-servers"),
-
     fetchAccessibleServers("/admin/servers"),
-
   ]);
 
 

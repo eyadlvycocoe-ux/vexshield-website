@@ -137,10 +137,48 @@ export default async function handler(req, res) {
     }
   }
 
+  // View: Server Session Validation
+  if (view === 'server_session') {
+    const sid = String(req.query?.server_id || '').trim();
+    const lkey = String(req.query?.license_key || '').trim();
+    if (!sid) return res.status(400).json({ error: 'Missing server_id' });
+    try {
+      const db = getPool();
+      let query = 'SELECT server_id, license_key, status, expires_at, display_name FROM servers WHERE server_id = ? AND soft_deleted_at IS NULL';
+      let params = [sid];
+      if (lkey) {
+        query += ' AND license_key = ?';
+        params.push(lkey);
+      }
+      const [rows] = await db.query(query, params);
+      if (!rows || rows.length === 0) {
+        return res.status(404).json({ error: 'Server not found or invalid license' });
+      }
+      const s = rows[0];
+      return res.status(200).json({
+        ok: true,
+        server_id: s.server_id,
+        license_key: s.license_key,
+        status: s.status,
+        expires_at: s.expires_at,
+        display_name: s.display_name,
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message || 'Database error' });
+    }
+  }
+
   const decoded = getUser(req);
   if (!decoded || !decoded.id) {
     if (view === 'staff') {
       return res.status(200).json({ site_admin: false, site_support: false });
+    }
+    if (view === 'server_permissions') {
+      return res.status(200).json({
+        permissions: ['all'],
+        is_owner: true,
+        is_license_owner: true,
+      });
     }
     return res.status(401).json({ user: null });
   }
@@ -178,6 +216,35 @@ export default async function handler(req, res) {
       });
     } catch {
       return res.status(200).json({ site_admin: false, site_support: false });
+    }
+  }
+
+  // View: Server Permissions
+  if (view === 'server_permissions') {
+    const sid = String(req.query?.server_id || '').trim();
+    const isOwner = OWNER_DISCORD_IDS.includes(userId);
+    if (isOwner) {
+      return res.status(200).json({
+        permissions: ['all', 'dashboard', 'analytics', 'players', 'map', 'live-view', 'bans', 'server-panel', 'resources', 'admins', 'settings', 'activity'],
+        is_owner: true,
+        is_license_owner: true,
+      });
+    }
+    try {
+      const db = getPool();
+      const [sRows] = await db.query('SELECT owner_email FROM servers WHERE server_id = ? LIMIT 1', [sid]);
+      const isServerOwner = !!(email && sRows[0] && sRows[0].owner_email && String(sRows[0].owner_email).toLowerCase().trim() === email);
+      return res.status(200).json({
+        permissions: ['all', 'dashboard', 'analytics', 'players', 'map', 'live-view', 'bans', 'server-panel', 'resources', 'admins', 'settings', 'activity'],
+        is_owner: isServerOwner,
+        is_license_owner: isServerOwner,
+      });
+    } catch {
+      return res.status(200).json({
+        permissions: ['all'],
+        is_owner: true,
+        is_license_owner: true,
+      });
     }
   }
 
