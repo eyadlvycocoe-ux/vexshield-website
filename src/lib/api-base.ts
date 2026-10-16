@@ -257,7 +257,7 @@ export function dbEqQueryParam(column: string, value: string): string {
  * Path avoids legacy `site-admin` / `site_admin` URL substrings targeted by known userscript bypasses.
  */
 export function siteStaffVerifyUrl(): string {
-  return apiUrl("/api/elevated-staff");
+  return apiUrl("/api/auth/staff");
 }
 
 /** True only when the API returns 200 JSON with `site_admin: true` for the current session cookie. */

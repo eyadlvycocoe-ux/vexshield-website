@@ -173,9 +173,13 @@ export default function MyServers() {
 
       let rows: DashboardServerRow[] = [];
       try {
-        rows = await fetchJsonApi<DashboardServerRow[]>("/api/dashboard-servers");
+        rows = await fetchJsonApi<DashboardServerRow[]>("/api/auth/servers");
       } catch {
-        rows = await fetchJsonApi<DashboardServerRow[]>("/api/users/me/dashboard-servers");
+        try {
+          rows = await fetchJsonApi<DashboardServerRow[]>("/api/dashboard-servers");
+        } catch {
+          rows = await fetchJsonApi<DashboardServerRow[]>("/api/users/me/dashboard-servers");
+        }
       }
       const activeRows = (rows ?? []).filter((s) => !s.soft_deleted_at);
       const merged = activeRows.map((s) => ({
