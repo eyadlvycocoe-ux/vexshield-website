@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import { randomUUID } from 'crypto';
 
 let pool = null;
 function getPool() {
@@ -35,7 +36,17 @@ const ALLOWED_TABLES = new Set([
   'feedbacks',
   'global_bans',
   'discord_users',
-  'whitelist_entries'
+  'whitelist_entries',
+  'shared_configs',
+  'profiles',
+  'redeem_codes',
+  'blacklisted_users',
+  'blacklisted_proofs',
+  'bot_staff_access',
+  'blacklisted_discord_servers',
+  'consoles',
+  'dashboard_commands',
+  'reports'
 ]);
 
 function isValidIdentifier(val) {
@@ -43,7 +54,14 @@ function isValidIdentifier(val) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-csrf-token, *');
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   // Extract table from query string or path parameter
   const table = String(req.query?.table || '').trim();
@@ -57,6 +75,9 @@ export default async function handler(req, res) {
 
   const db = getPool();
 
+  // ---------------------------------------------------------
+  // GET: Read data with filtering, sorting, pagination & counting
+  // ---------------------------------------------------------
   if (req.method === 'GET') {
     try {
       const isCountHead = req.query.count === 'exact' && (req.query.head === 'true' || req.query.head === true);
@@ -127,6 +148,214 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error(`DB query error on ${table}:`, err);
       return res.status(500).json({ error: err.message || 'Database error' });
+    }
+  }
+
+  // Parse JSON body for mutations
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (_) {
+      body = {};
+    }
+  }
+  if (!body || typeof body !== 'object') {
+    body = {};
+  }
+
+  // ---------------------------------------------------------
+  // POST: Insert or Upsert
+  // ---------------------------------------------------------
+  if (req.method === 'POST') {
+    try {
+      const records = Array.isArray(body) ? body : [body];
+      const results = [];
+
+      for (const item of records) {
+        const row = { ...item };
+        if (!row.id && table !== 'shared_config_ratings') {
+          row.id = randomUUID();
+        }
+
+        for (const k in row) {
+          if (typeof row[k] === 'object' && row[k] !== null) {
+            row[k] = JSON.stringify(row[k]);
+          }
+        }
+
+        const keys = Object.keys(row).filter(isValidIdentifier);
+        if (keys.length === 0) continue;
+
+        const values = keys.map(k => row[k]);
+        const placeholders = keys.map(() => '?').join(', ');
+        const updateCols = keys.filter(k => k.toLowerCase() !== 'id' && k.toLowerCase() !== 'created_at');
+        const updateClause = updateCols.length > 0
+          ? updateCols.map(k => `\`${k}\` = VALUES(\`${k}\`)`).join(', ')
+          : '`id` = `id`';
+
+        const sql = `INSERT INTO \`${table}\` (${keys.map(k => `\`${k}\``).join(', ')})
+                     VALUES (${placeholders})
+                     ON DUPLICATE KEY UPDATE ${updateClause}`;
+
+        await db.query(sql, values);
+        results.push(row);
+
+        // If settings were updated, queue a live update command for FiveM
+        if (table === 'server_settings' && row.server_id) {
+          try {
+            const sid = String(row.server_id).trim();
+            const [pending] = await db.query(
+              "SELECT id FROM dashboard_commands WHERE server_id = ? AND command_type = 'update_settings' AND status = 'pending' LIMIT 1",
+              [sid]
+            );
+            if (!pending || pending.length === 0) {
+              await db.query(
+                "INSERT INTO dashboard_commands (id, server_id, command_type, command_data, status) VALUES (?, ?, 'update_settings', ?, 'pending')",
+                [randomUUID(), sid, JSON.stringify({ fetch_settings: true })]
+              );
+            }
+          } catch (cmdErr) {
+            console.warn('[db:server_settings] dashboard_commands queue notice:', cmdErr.message);
+          }
+        }
+      }
+
+      return res.status(200).json(Array.isArray(body) ? results : (results[0] || { success: true }));
+    } catch (err) {
+      console.error(`DB insert/upsert error on ${table}:`, err);
+      return res.status(500).json({ error: err.message || 'Database insert error' });
+    }
+  }
+
+  // ---------------------------------------------------------
+  // PATCH / PUT: Update existing records
+  // ---------------------------------------------------------
+  if (req.method === 'PATCH' || req.method === 'PUT') {
+    try {
+      let whereCol = null;
+      let whereVal = null;
+
+      if (req.query.eq) {
+        const eqStr = String(req.query.eq);
+        const sep = eqStr.indexOf(':');
+        if (sep > 0) {
+          whereCol = eqStr.slice(0, sep).trim();
+          whereVal = eqStr.slice(sep + 1);
+        }
+      }
+
+      if (!whereCol) {
+        for (const [k, v] of Object.entries(req.query)) {
+          if (!['table', 'select', 'order', 'limit', 'offset', 'count', 'head', 'eq'].includes(k) && isValidIdentifier(k)) {
+            whereCol = k;
+            whereVal = v;
+            break;
+          }
+        }
+      }
+
+      // If PUT without where filter, treat as UPSERT
+      if (!whereCol && req.method === 'PUT' && body && typeof body === 'object') {
+        const row = { ...body };
+        if (!row.id) row.id = randomUUID();
+        for (const k in row) {
+          if (typeof row[k] === 'object' && row[k] !== null) {
+            row[k] = JSON.stringify(row[k]);
+          }
+        }
+        const keys = Object.keys(row).filter(isValidIdentifier);
+        if (keys.length > 0) {
+          const values = keys.map(k => row[k]);
+          const placeholders = keys.map(() => '?').join(', ');
+          const updateCols = keys.filter(k => k.toLowerCase() !== 'id' && k.toLowerCase() !== 'created_at');
+          const updateClause = updateCols.length > 0
+            ? updateCols.map(k => `\`${k}\` = VALUES(\`${k}\`)`).join(', ')
+            : '`id` = `id`';
+          const sql = `INSERT INTO \`${table}\` (${keys.map(k => `\`${k}\``).join(', ')})
+                       VALUES (${placeholders})
+                       ON DUPLICATE KEY UPDATE ${updateClause}`;
+          await db.query(sql, values);
+          return res.status(200).json(row);
+        }
+      }
+
+      if (!whereCol || !isValidIdentifier(whereCol)) {
+        return res.status(400).json({ error: 'Filter required for update' });
+      }
+
+      const updateData = { ...body };
+      delete updateData.id;
+
+      for (const k in updateData) {
+        if (typeof updateData[k] === 'object' && updateData[k] !== null) {
+          updateData[k] = JSON.stringify(updateData[k]);
+        }
+      }
+
+      const updateKeys = Object.keys(updateData).filter(isValidIdentifier);
+      if (updateKeys.length === 0) {
+        return res.status(200).json({ success: true, updated: 0 });
+      }
+
+      const setClause = updateKeys.map(k => `\`${k}\` = ?`).join(', ');
+      const updateValues = [...updateKeys.map(k => updateData[k]), whereVal];
+
+      const sql = `UPDATE \`${table}\` SET ${setClause} WHERE \`${whereCol}\` = ?`;
+      const [result] = await db.query(sql, updateValues);
+
+      // If server_settings or servers table was updated, queue live reload
+      if ((table === 'server_settings' || table === 'servers') && whereCol === 'server_id') {
+        try {
+          const sid = String(whereVal).trim();
+          const [pending] = await db.query(
+            "SELECT id FROM dashboard_commands WHERE server_id = ? AND command_type = 'update_settings' AND status = 'pending' LIMIT 1",
+            [sid]
+          );
+          if (!pending || pending.length === 0) {
+            await db.query(
+              "INSERT INTO dashboard_commands (id, server_id, command_type, command_data, status) VALUES (?, ?, 'update_settings', ?, 'pending')",
+              [randomUUID(), sid, JSON.stringify({ fetch_settings: true })]
+            );
+          }
+        } catch (_) {}
+      }
+
+      return res.status(200).json({ success: true, updated: result.affectedRows });
+    } catch (err) {
+      console.error(`DB update error on ${table}:`, err);
+      return res.status(500).json({ error: err.message || 'Database update error' });
+    }
+  }
+
+  // ---------------------------------------------------------
+  // DELETE: Delete records with filter
+  // ---------------------------------------------------------
+  if (req.method === 'DELETE') {
+    try {
+      let whereCol = null;
+      let whereVal = null;
+
+      if (req.query.eq) {
+        const eqStr = String(req.query.eq);
+        const sep = eqStr.indexOf(':');
+        if (sep > 0) {
+          whereCol = eqStr.slice(0, sep).trim();
+          whereVal = eqStr.slice(sep + 1);
+        }
+      }
+
+      if (!whereCol || !isValidIdentifier(whereCol)) {
+        return res.status(400).json({ error: 'Filter required for delete' });
+      }
+
+      const sql = `DELETE FROM \`${table}\` WHERE \`${whereCol}\` = ?`;
+      const [result] = await db.query(sql, [whereVal]);
+
+      return res.status(200).json({ success: true, deleted: result.affectedRows });
+    } catch (err) {
+      console.error(`DB delete error on ${table}:`, err);
+      return res.status(500).json({ error: err.message || 'Database delete error' });
     }
   }
 
