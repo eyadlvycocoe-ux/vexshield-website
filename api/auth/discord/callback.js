@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   const { code, state, error } = req.query;
   const proto = req.headers['x-forwarded-proto'] || 'https';
   const rawHost = req.headers['x-forwarded-host'] || req.headers.host || 'vexshield.site';
-  const host = rawHost.includes('vexshield.site') ? 'www.vexshield.site' : rawHost;
+  const host = rawHost.includes('vexshield.site') ? 'vexshield.site' : rawHost;
   const baseClientUrl = `${proto}://${host}`;
 
   if (error || !code) {
