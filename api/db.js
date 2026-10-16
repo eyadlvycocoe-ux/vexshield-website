@@ -349,6 +349,43 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Filter required for delete' });
       }
 
+      // If deleting a server, cascade delete all child references first to avoid FK constraint failures
+      if (table === 'servers') {
+        try {
+          const [targetRows] = await db.query(
+            `SELECT id, server_id FROM servers WHERE \`${whereCol}\` = ? OR id = ? OR server_id = ? LIMIT 1`,
+            [whereVal, whereVal, whereVal]
+          );
+          const sid = targetRows?.[0]?.server_id;
+          const targetId = targetRows?.[0]?.id;
+
+          if (sid || targetId) {
+            const childTables = [
+              'server_admins',
+              'server_settings',
+              'server_resources',
+              'bans',
+              'kicks',
+              'warns',
+              'reports',
+              'dashboard_commands',
+              'consoles',
+              'live_monitor_frames',
+              'players_snapshots'
+            ];
+            for (const ct of childTables) {
+              try {
+                if (sid) await db.query(`DELETE FROM \`${ct}\` WHERE server_id = ?`, [sid]);
+              } catch (_) {}
+            }
+            const [delRes] = await db.query('DELETE FROM servers WHERE id = ? OR server_id = ?', [targetId || whereVal, sid || whereVal]);
+            return res.status(200).json({ success: true, deleted: delRes.affectedRows });
+          }
+        } catch (serverDelErr) {
+          console.error('[db:servers] cascade delete failed:', serverDelErr);
+        }
+      }
+
       const sql = `DELETE FROM \`${table}\` WHERE \`${whereCol}\` = ?`;
       const [result] = await db.query(sql, [whereVal]);
 

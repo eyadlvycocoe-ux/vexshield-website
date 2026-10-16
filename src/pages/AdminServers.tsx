@@ -321,20 +321,24 @@ export default function AdminServers() {
   }, []);
 
   const handleDeleteServer = async (server: ServerConfig) => {
-    if (
-      !confirm(
-        `Remove server "${server.display_name || server.server_ip}"? It will be disabled for 7 days (restorable), then permanently deleted if not restored.`,
-      )
-    )
-      return;
-
-    const { error } = await supabase.from('servers').delete().eq('id', server.id);
-    if (error) {
-      toast.error("Failed to delete server");
+    const sName = server.display_name || server.server_ip || server.server_id;
+    if (!confirm(`Are you sure you want to permanently delete "${sName}"? This cannot be undone.`)) {
       return;
     }
 
-    toast.success("Server marked for removal (7-day restore window)");
+    let { error } = await supabase.from('servers').delete().eq('server_id', server.server_id);
+    if (error && server.id) {
+      const res = await supabase.from('servers').delete().eq('id', server.id);
+      error = res.error;
+    }
+
+    if (error) {
+      toast.error(`Failed to delete server: ${error.message || 'Unknown error'}`);
+      return;
+    }
+
+    setServers((prev) => prev.filter((s) => s.server_id !== server.server_id && s.id !== server.id));
+    toast.success(`Server "${sName}" permanently deleted`);
     loadServers();
   };
 
