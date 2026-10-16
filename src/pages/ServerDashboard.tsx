@@ -246,12 +246,25 @@ export default function ServerDashboard() {
       const auth = await checkAuth();
       if (!auth) return;
       try {
-        const { data: snapshotData } = await supabase
-          .from("players_snapshots")
-          .select("*")
-          .eq("server_id", serverId)
-          .maybeSingle();
+        const [snapshotRes, serverStatusRes] = await Promise.all([
+          supabase
+            .from("players_snapshots")
+            .select("*")
+            .eq("server_id", serverId)
+            .maybeSingle(),
+          supabase
+            .from("servers")
+            .select("status, server_ip, display_name")
+            .eq("server_id", serverId)
+            .maybeSingle(),
+        ]);
+        const snapshotData = snapshotRes.data;
         applySnapshot(snapshotData);
+        if (serverStatusRes?.data) {
+          const row = serverStatusRes.data;
+          setServer((prev: any) => (prev ? { ...prev, ...row } : row));
+          if (row.server_ip) setIpDraft(row.server_ip);
+        }
         setRateLimited(false);
         const liveCount = effectiveLivePlayerCount(snapshotData ?? undefined);
         setStats((prev) => ({ ...prev, peakPlayers: liveCount }));

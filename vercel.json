@@ -8,6 +8,22 @@
       "destination": "/api/db.js?table=:table"
     },
     {
+      "source": "/api/functions/report",
+      "destination": "/api/report.js"
+    },
+    {
+      "source": "/api/report",
+      "destination": "/api/report.js"
+    },
+    {
+      "source": "/api/functions/live-monitoring",
+      "destination": "/api/report.js?action=monitoring"
+    },
+    {
+      "source": "/api/public/global-blacklist.json",
+      "destination": "/global-blacklist.json"
+    },
+    {
       "source": "/api/auth/server-session",
       "destination": "/api/auth/session.js?view=server_session"
     },
