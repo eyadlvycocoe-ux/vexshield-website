@@ -8,7 +8,7 @@ function getPool() {
       host: process.env.DB_HOST || 'mysql-2c01ccb3-eyadlaghnimi2012-de61.i.aivencloud.com',
       port: Number(process.env.DB_PORT || 21202),
       user: process.env.DB_USER || 'avnadmin',
-      password: process.env.DB_PASSWORD || Buffer.from('QVZOU19hNHpiZTIzdVBCWWZaUVlTZ0lQ', 'base64').toString('ascii'),
+      password: process.env.DB_PASSWORD || Buffer.from('QVZOU19hNHpiZTIzdVBCWWZacVlTZ0lQ', 'base64').toString('ascii'),
       database: process.env.DB_NAME || 'defaultdb',
       ssl: { rejectUnauthorized: false },
       waitForConnections: true,
@@ -96,7 +96,15 @@ export default async function handler(req, res) {
       { expiresIn: '7d' }
     );
 
-    const targetUrl = state ? decodeURIComponent(String(state)) : `${baseClientUrl}/my-servers`;
+    const targetBase = state ? decodeURIComponent(String(state)) : `${baseClientUrl}/my-servers`;
+    let targetUrl = targetBase;
+    try {
+      const urlObj = new URL(targetBase, baseClientUrl);
+      urlObj.searchParams.set('token', token);
+      targetUrl = urlObj.toString();
+    } catch {
+      targetUrl = `${targetBase}${targetBase.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
+    }
 
     res.setHeader('Set-Cookie', [
       `token=${token}; Path=/; Max-Age=604800; Secure; SameSite=Lax`,
@@ -109,7 +117,8 @@ export default async function handler(req, res) {
     res.end();
   } catch (err) {
     console.error('Discord callback error:', err);
-    res.writeHead(302, { Location: `${baseClientUrl}/auth?error=server_error` });
+    const detail = err && err.message ? encodeURIComponent(err.message.substring(0, 100)) : 'server_error';
+    res.writeHead(302, { Location: `${baseClientUrl}/auth?error=${detail}` });
     res.end();
   }
 }
