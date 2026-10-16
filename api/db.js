@@ -11,7 +11,9 @@ function getPool() {
       database: process.env.DB_NAME || 'defaultdb',
       ssl: { rejectUnauthorized: false },
       waitForConnections: true,
-      connectionLimit: 5,
+      connectionLimit: 1,
+      maxIdle: 0,
+      idleTimeout: 3000,
       queueLimit: 0,
     });
   }

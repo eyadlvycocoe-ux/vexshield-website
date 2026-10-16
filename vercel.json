@@ -9,11 +9,11 @@
     },
     {
       "source": "/api/functions/report",
-      "destination": "/api/report.js"
+      "destination": "/api/report.js?route=report"
     },
     {
       "source": "/api/report",
-      "destination": "/api/report.js"
+      "destination": "/api/report.js?route=report"
     },
     {
       "source": "/api/functions/live-monitoring",
