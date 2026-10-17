@@ -20,6 +20,14 @@
       "destination": "/api/report.js?action=monitoring"
     },
     {
+      "source": "/api/functions/server-command",
+      "destination": "/api/server-command.js"
+    },
+    {
+      "source": "/api/server-command",
+      "destination": "/api/server-command.js"
+    },
+    {
       "source": "/api/public/global-blacklist.json",
       "destination": "/global-blacklist.json"
     },

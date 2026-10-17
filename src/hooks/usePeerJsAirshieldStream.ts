@@ -4,6 +4,8 @@ import type { MediaConnection } from "peerjs";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPeerJsClientOptions, resolvePeerJsSignalingMode, type PeerJsSignalingMode } from "@/lib/airshieldPeerJs";
 
+import { getApiBaseUrl } from "@/lib/api-base";
+
 export type PeerStreamStatus = "idle" | "connecting" | "connected" | "disconnected";
 
 async function queueServerCommand(
@@ -11,13 +13,37 @@ async function queueServerCommand(
   command_type: string,
   command_data: Record<string, unknown>,
 ) {
-  const raw = sessionStorage.getItem("connected_server");
-  if (!raw) throw new Error("No server connection");
-  const { license_key } = JSON.parse(raw) as { license_key?: string };
+  let licenseKey = "";
+  try {
+    const raw = sessionStorage.getItem("connected_server");
+    if (raw) {
+      const parsed = JSON.parse(raw) as { license_key?: string };
+      licenseKey = parsed?.license_key || "";
+    }
+  } catch {}
+
+  const payload = {
+    server_id: serverId,
+    license_key: licenseKey,
+    command_type,
+    command_data,
+  };
+
   const { error } = await supabase.functions.invoke("server-command", {
-    body: { server_id: serverId, license_key, command_type, command_data },
+    body: payload,
   });
-  if (error) throw error;
+
+  if (error) {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/server-command`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return;
+    } catch {}
+    throw error;
+  }
 }
 
 const CONNECT_TIMEOUT_MS = 22_000;
