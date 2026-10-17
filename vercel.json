@@ -5,7 +5,11 @@
   "rewrites": [
     {
       "source": "/api/license/redeem",
-      "destination": "/api/license/redeem.js"
+      "destination": "/api/license-redeem.js"
+    },
+    {
+      "source": "/api/license-redeem",
+      "destination": "/api/license-redeem.js"
     },
     {
       "source": "/api/db/:table",
