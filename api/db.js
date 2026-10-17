@@ -13,11 +13,11 @@ function getPool() {
       database: process.env.DB_NAME || 'defaultdb',
       ssl: { rejectUnauthorized: false },
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit: 1,
+      maxIdle: 0,
+      idleTimeout: 1000,
       queueLimit: 0,
-      connectTimeout: 7000,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: 0,
+      connectTimeout: 5000,
     });
   }
   return pool;
