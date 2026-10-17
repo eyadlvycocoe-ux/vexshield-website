@@ -4,14 +4,6 @@ const mysql = require('mysql2/promise');
 const crypto = require('crypto');
 require('dotenv').config();
 
-const POSSIBLE_PASSWORDS = [
-    process.env.DB_PASSWORD,
-    'J8HDGhhaj726@Gjka3Klbs5!s',
-    'Z8k2Pm9Qa4Rv7Lw3Yt6Xo1Nn5Mk0Jj2',
-    'root',
-    '',
-].filter(p => p !== undefined);
-
 let activePool = null;
 
 async function getPool() {
@@ -19,55 +11,28 @@ async function getPool() {
 
     const host = process.env.DB_HOST || 'localhost';
     const port = parseInt(process.env.DB_PORT || '3306', 10);
-    const user = process.env.DB_USER || 'root';
+    const user = process.env.DB_USER || 'avnadmin';
+    const password = process.env.DB_PASSWORD || '';
     const database = process.env.DB_NAME || 'defaultdb';
     const ssl = (process.env.DB_SSL === 'true' || host.includes('aivencloud.com'))
         ? { rejectUnauthorized: false }
         : undefined;
 
-    for (const pwd of POSSIBLE_PASSWORDS) {
-        let testPool = null;
-        try {
-            testPool = mysql.createPool({
-                host,
-                port,
-                user,
-                password: pwd,
-                database,
-                waitForConnections: true,
-                connectionLimit: 3,
-                queueLimit: 0,
-                ssl,
-                enableKeepAlive: true,
-                keepAliveInitialDelay: 10000,
-            });
-
-            const conn = await testPool.getConnection();
-            await conn.query('SELECT 1');
-            conn.release();
-
-            console.log(`✅ MySQL Pool connected successfully!`);
-            activePool = testPool;
-            return activePool;
-        } catch (err) {
-            if (testPool) {
-                await testPool.end().catch(() => { });
-            }
-        }
-    }
-
-    // Default pool fallback if all tests failed
     activePool = mysql.createPool({
         host,
         port,
         user,
-        password: process.env.DB_PASSWORD || '',
+        password,
         database,
         waitForConnections: true,
-        connectionLimit: 10,
+        connectionLimit: 3,
         queueLimit: 0,
         ssl,
+        connectTimeout: 10000,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
     });
+
     return activePool;
 }
 
@@ -75,8 +40,7 @@ async function getPool() {
 async function initDb(retries = 5) {
     try {
         const pool = await getPool();
-        const connection = await pool.getConnection();
-        await connection.query(`
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS discord_bot_connections (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 guild_id VARCHAR(255) NOT NULL UNIQUE,
@@ -88,13 +52,12 @@ async function initDb(retries = 5) {
                 FOREIGN KEY (server_id) REFERENCES servers(server_id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
-        connection.release();
         console.log('✅ Database initialized & discord_bot_connections table ready.');
     } catch (error) {
         console.error('❌ Failed to initialize database table:', error.message);
         if (retries > 0) {
-            console.log(`🔄 Retrying database initialization in 4s (${retries} retries left)...`);
-            setTimeout(() => initDb(retries - 1), 4000);
+            console.log(`🔄 Retrying database initialization in 5s (${retries} retries left)...`);
+            setTimeout(() => initDb(retries - 1), 5000);
         }
     }
 }
