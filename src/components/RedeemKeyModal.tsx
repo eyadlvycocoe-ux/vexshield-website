@@ -60,7 +60,15 @@ export function RedeemKeyModal({ open, onOpenChange, onSuccess }: RedeemKeyModal
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to redeem license key");
+        const errorMsg =
+          typeof data?.error === "string"
+            ? data.error
+            : typeof data?.error?.message === "string"
+            ? data.error.message
+            : typeof data?.message === "string"
+            ? data.message
+            : "Failed to redeem license key";
+        throw new Error(errorMsg);
       }
 
       setIsSuccess(true);
@@ -73,8 +81,14 @@ export function RedeemKeyModal({ open, onOpenChange, onSuccess }: RedeemKeyModal
         onOpenChange(false);
         if (onSuccess) onSuccess();
       }, 1200);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to redeem key");
+    } catch (e: any) {
+      const msg =
+        typeof e?.message === "string"
+          ? e.message
+          : typeof e === "string"
+          ? e
+          : "Failed to redeem key";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
