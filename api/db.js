@@ -393,6 +393,8 @@ export default async function handler(req, res) {
 
         let assignedServerId = null;
 
+        const expiresAt = body.expires_at ? new Date(body.expires_at).toISOString().slice(0, 19).replace('T', ' ') : null;
+
         if (existing && existing.length > 0) {
           const row = existing[0];
           assignedServerId = row.server_id;
@@ -402,9 +404,8 @@ export default async function handler(req, res) {
             `UPDATE servers 
              SET server_ip = ?, 
                  owner_email = COALESCE(NULLIF(owner_email, ''), ?), 
-                 status = 'online', 
-                 soft_deleted_at = NULL, 
-                 last_update = NOW() 
+                 status = 'offline', 
+                 soft_deleted_at = NULL
              WHERE license_key = ?`,
             [serverIp, ownerEmail, licenseKey]
           );
@@ -416,14 +417,14 @@ export default async function handler(req, res) {
             db,
             `INSERT INTO servers (
               id, server_id, license_key, server_ip, display_name, status,
-              owner_email, created_at, last_update,
+              owner_email, expires_at, created_at, last_update,
               ent_airshield, ent_airscanner, ent_airpc, ent_airzeroflood
             ) VALUES (
-              ?, ?, ?, ?, ?, 'online',
-              ?, NOW(), NOW(),
+              ?, ?, ?, ?, ?, 'offline',
+              ?, ?, NOW(), NULL,
               1, 1, 1, 1
             )`,
-            [newId, assignedServerId, licenseKey, serverIp, 'VexShield Server', ownerEmail]
+            [newId, assignedServerId, licenseKey, serverIp, 'VexShield Server', ownerEmail, expiresAt]
           );
         }
 

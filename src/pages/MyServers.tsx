@@ -35,6 +35,7 @@ interface ServerData {
   bans_count?: number;
   ent_airshield?: number | boolean;
   expires_at?: string | null;
+  last_update?: string | null;
   soft_deleted_at?: string | null;
 }
 
@@ -54,6 +55,7 @@ type DashboardServerRow = {
   bans_count?: number;
   ent_airshield?: number | boolean;
   expires_at?: string | null;
+  last_update?: string | null;
   soft_deleted_at?: string | null;
 };
 
@@ -309,7 +311,8 @@ export default function MyServers() {
                   ) : (
                     <div className="space-y-2">
                       {servers.map((server) => {
-                        const isOnline = normalizeServerStatus(server.status) === "online";
+                        const isOnline = normalizeServerStatus(server.status) === "online" &&
+                          Boolean(server.last_update && (Date.now() - new Date(server.last_update).getTime() <= 5 * 60 * 1000));
                         const displayName = server.display_name || server.server_id;
 
                         return (

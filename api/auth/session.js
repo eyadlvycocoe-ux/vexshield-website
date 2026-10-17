@@ -456,6 +456,109 @@ export default async function handler(req, res) {
     }
     try {
       const db = getPool();
+
+      if (req.method === 'POST') {
+        let b = req.body;
+        if (typeof b === 'string') {
+          try { b = JSON.parse(b); } catch { b = {}; }
+        }
+        const {
+          server_id,
+          server_ip,
+          license_key,
+          display_name,
+          owner_email,
+          status = 'offline',
+          expires_at,
+          ent_airshield = 1,
+          ent_airscanner = 1,
+          ent_airpc = 1,
+          ent_airzeroflood = 1
+        } = b || {};
+
+        if (!license_key) {
+          return res.status(400).json({ error: 'License key is required' });
+        }
+
+        const assignedServerId = server_id || `VexShield-${crypto.randomUUID().replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}`;
+        const newId = crypto.randomUUID();
+        const cleanIp = server_ip ? String(server_ip).trim() : null;
+        const cleanEmail = owner_email ? String(owner_email).trim() : null;
+        const cleanExpires = expires_at ? new Date(expires_at).toISOString().slice(0, 19).replace('T', ' ') : null;
+
+        await db.query(
+          `INSERT INTO servers (
+            id, server_id, license_key, server_ip, display_name, status,
+            owner_email, expires_at, created_at, last_update,
+            ent_airshield, ent_airscanner, ent_airpc, ent_airzeroflood
+          ) VALUES (
+            ?, ?, ?, ?, ?, 'offline',
+            ?, ?, NOW(), NULL,
+            ?, ?, ?, ?
+          ) ON DUPLICATE KEY UPDATE
+            server_ip = VALUES(server_ip),
+            display_name = VALUES(display_name),
+            owner_email = VALUES(owner_email),
+            expires_at = VALUES(expires_at),
+            ent_airshield = VALUES(ent_airshield)`,
+          [
+            newId,
+            assignedServerId,
+            license_key,
+            cleanIp,
+            display_name || 'VexShield Server',
+            cleanEmail,
+            cleanExpires,
+            ent_airshield ? 1 : 0,
+            ent_airscanner ? 1 : 0,
+            ent_airpc ? 1 : 0,
+            ent_airzeroflood ? 1 : 0
+          ]
+        );
+
+        return res.status(200).json({
+          success: true,
+          server_id: assignedServerId,
+          license_key,
+          expires_at: cleanExpires,
+          status: 'offline'
+        });
+      }
+
+      if (req.method === 'PATCH') {
+        let b = req.body;
+        if (typeof b === 'string') {
+          try { b = JSON.parse(b); } catch { b = {}; }
+        }
+        const targetServerId = req.query.server_id || req.query.subpath || b.server_id;
+        if (!targetServerId) {
+          return res.status(400).json({ error: 'server_id required for PATCH' });
+        }
+        const updates = [];
+        const params = [];
+        if (b.expires_at !== undefined) {
+          updates.push('expires_at = ?');
+          params.push(b.expires_at ? new Date(b.expires_at).toISOString().slice(0, 19).replace('T', ' ') : null);
+        }
+        if (b.display_name !== undefined) {
+          updates.push('display_name = ?');
+          params.push(b.display_name);
+        }
+        if (b.server_ip !== undefined) {
+          updates.push('server_ip = ?');
+          params.push(b.server_ip);
+        }
+        if (b.status !== undefined) {
+          updates.push('status = ?');
+          params.push(b.status);
+        }
+        if (updates.length > 0) {
+          params.push(targetServerId);
+          await db.query(`UPDATE servers SET ${updates.join(', ')} WHERE server_id = ?`, params);
+        }
+        return res.status(200).json({ success: true });
+      }
+
       const [rows] = await db.query('SELECT * FROM servers WHERE soft_deleted_at IS NULL ORDER BY created_at DESC');
       return res.status(200).json(rows);
     } catch (err) {

@@ -812,6 +812,12 @@ export default function ServerDashboard() {
     ? formatDistanceToNow(new Date(server.expires_at), { addSuffix: true })
     : "Never";
 
+  const isServerOnline = Boolean(
+    server.status === "online" &&
+    server.last_update &&
+    (Date.now() - new Date(server.last_update).getTime() <= 5 * 60 * 1000)
+  );
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-4 sm:p-6 lg:p-8 bg-[#070b14] text-white">
       {/* Subtle grid background */}
@@ -878,7 +884,7 @@ export default function ServerDashboard() {
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium",
-                server.status === "online"
+                isServerOnline
                   ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
                   : "border-white/10 bg-white/5 text-zinc-400"
               )}
@@ -886,10 +892,10 @@ export default function ServerDashboard() {
               <span
                 className={cn(
                   "size-1.5 rounded-full",
-                  server.status === "online" ? "bg-emerald-400 animate-pulse" : "bg-zinc-500"
+                  isServerOnline ? "bg-emerald-400 animate-pulse" : "bg-zinc-500"
                 )}
               />
-              {server.status === "online" ? "Online" : "Offline"}
+              {isServerOnline ? "Online" : "Offline"}
             </span>
 
             <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono font-medium text-cyan-400">
@@ -969,10 +975,10 @@ export default function ServerDashboard() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">SERVER STATUS</span>
               </div>
               <Badge
-                variant={server.status === "online" ? "default" : "destructive"}
-                className={cn("text-[10px] font-bold px-2 py-0.5 uppercase", server.status === "online" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "")}
+                variant={isServerOnline ? "default" : "destructive"}
+                className={cn("text-[10px] font-bold px-2 py-0.5 uppercase", isServerOnline ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "")}
               >
-                {server.status === "online" ? "Online" : "Offline"}
+                {isServerOnline ? "Online" : "Offline"}
               </Badge>
             </div>
             <div className="pt-2">
