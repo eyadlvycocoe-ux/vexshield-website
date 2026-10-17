@@ -1,5 +1,7 @@
 import mysql from 'mysql2/promise';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 let pool = null;
 function getPool() {
@@ -12,7 +14,7 @@ function getPool() {
       database: process.env.DB_NAME || 'defaultdb',
       ssl: { rejectUnauthorized: false },
       waitForConnections: true,
-      connectionLimit: 1,
+      connectionLimit: 10,
       maxIdle: 0,
       idleTimeout: 3000,
       queueLimit: 0,
@@ -167,6 +169,117 @@ export default async function handler(req, res) {
       });
     } catch (err) {
       return res.status(500).json({ error: err.message || 'Database error' });
+    }
+  }
+
+  // View: Redeem / Bind License Key to Server
+  if (view === 'redeem_license' || view === 'redeem') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch (_) { body = {}; }
+    }
+    body = body || {};
+
+    const licenseKey = String(body.license_key || '').trim().toUpperCase();
+    let serverIp = String(body.server_ip || '').trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+
+    if (!licenseKey) {
+      return res.status(400).json({ error: 'Please enter a valid License Key' });
+    }
+    if (!serverIp) {
+      return res.status(400).json({ error: 'Please enter a valid Server IP' });
+    }
+
+    const decodedUser = getUser(req);
+    const ownerEmail = (decodedUser && decodedUser.email) ? String(decodedUser.email).trim().toLowerCase() : 'eyadlaghnimi2012@gmail.com';
+    const userId = decodedUser ? String(decodedUser.id) : null;
+
+    try {
+      const db = getPool();
+
+      const [existing] = await db.query(
+        'SELECT id, server_id, license_key, owner_email, server_ip, display_name FROM servers WHERE license_key = ? LIMIT 1',
+        [licenseKey]
+      );
+
+      let assignedServerId = null;
+
+      if (existing && existing.length > 0) {
+        const row = existing[0];
+        assignedServerId = row.server_id;
+
+        await db.query(
+          `UPDATE servers 
+           SET server_ip = ?, 
+               owner_email = COALESCE(NULLIF(owner_email, ''), ?), 
+               status = 'online', 
+               soft_deleted_at = NULL, 
+               last_update = NOW() 
+           WHERE license_key = ?`,
+          [serverIp, ownerEmail, licenseKey]
+        );
+      } else {
+        let predefinedServerId = null;
+        try {
+          const secretPath = path.join(process.cwd(), 'public', 'licenses-secret-x8f9v2m4p1q7z3w5.json');
+          if (fs.existsSync(secretPath)) {
+            const secretData = JSON.parse(fs.readFileSync(secretPath, 'utf8'));
+            const found = (secretData || []).find(item => String(item.license || '').trim().toUpperCase() === licenseKey);
+            if (found && found.server_id) {
+              predefinedServerId = found.server_id;
+            }
+          }
+        } catch (_) {}
+
+        assignedServerId = predefinedServerId || `VexShield-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+        const newId = crypto.randomUUID();
+
+        await db.query(
+          `INSERT INTO servers (
+            id, server_id, license_key, server_ip, display_name, status,
+            owner_email, created_at, last_update,
+            ent_airshield, ent_airscanner, ent_airpc, ent_airzeroflood
+          ) VALUES (
+            ?, ?, ?, ?, ?, 'online',
+            ?, NOW(), NOW(),
+            1, 1, 1, 1
+          )`,
+          [newId, assignedServerId, licenseKey, serverIp, 'VexShield Server', ownerEmail]
+        );
+      }
+
+      try {
+        await db.query(
+          `INSERT INTO server_settings (id, server_id, settings, updated_at)
+           VALUES (?, ?, ?, NOW())
+           ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+          [crypto.randomUUID(), assignedServerId, JSON.stringify({ ServerName: 'VexShield Protected Server' })]
+        );
+      } catch (_) {}
+
+      if (userId) {
+        try {
+          await db.query(
+            `INSERT INTO server_admins (id, server_id, user_id, role, created_at)
+             VALUES (?, ?, ?, 'owner', NOW())
+             ON DUPLICATE KEY UPDATE role = 'owner'`,
+            [crypto.randomUUID(), assignedServerId, userId]
+          );
+        } catch (_) {}
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'License key redeemed successfully!',
+        server_id: assignedServerId,
+      });
+    } catch (err) {
+      console.error('License redeem error in session.js:', err);
+      return res.status(500).json({ error: err.message || 'Database error while redeeming license key' });
     }
   }
 
