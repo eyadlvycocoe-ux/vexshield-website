@@ -91,7 +91,6 @@ const OPTION_TOOLTIPS: Record<string, string> = {
   'Anti Player Attach': 'Prevents attaching entities or peds onto other players.',
   'Anti Player Collision Disable': 'Prevents disabling player collision vectors.',
   'Anti Infinite Roll': 'Blocks combat roll cooldown bypass hacks.',
-  'Anti Fake Death': 'Counters fake death state and invincibility triggers.',
   'Anti Heal Spam': 'Prevents rapid health pack or event healing spam.',
   'Anti Godmode': 'Prevents health invulnerability, damage immunity, and health refill hacks.',
   'Anti Npc Hijack': 'Blocks unauthorized taking control of NPC peds.',
@@ -181,9 +180,6 @@ const OPTION_TOOLTIPS: Record<string, string> = {
   'Anti Global Voice': 'Blocks forcing broadcast voice channels to all players.',
   'Anti Inventory Exploit': 'Prevents remote inventory item dupe and modification events.',
   'Cheat Ai Detection': 'Heuristic detection for AI cheat automation and macros.',
-  'Anti Susano': 'Detects Susano cheat executor signatures.',
-  'Anti TZX': 'Counters TZX cheat framework injections.',
-  'Anti Skript': 'Blocks Skript cheat menu execution.',
   'Anti Lua Menu': 'Detects and blocks client-side execution of Lua cheat menus.',
   'Anti NUI Blocker': 'Prevents NUI focus hijacking and overlay blocking.',
   'Anti DevTools': 'Prevents browser DevTools injection and runtime debugging.',
@@ -198,7 +194,6 @@ const OPTION_TOOLTIPS: Record<string, string> = {
   'Anti Lua Executor': 'Blocks client-side Lua code execution.',
   'Anti AC Scanner': 'Counters anticheat scanner bypass tools.',
   'Anti Unauthorized Admin': 'Blocks fake admin menu permission spoofing.',
-  'Anti DLL Injection': 'Detects DLL memory injections into game process.',
   'Anti Bytecode Injection': 'Detects pre-compiled Lua bytecode injection.',
   'Anti Global Function Hook': 'Prevents hooking core GTA/FiveM global functions.',
   'Anti Native Hook': 'Blocks native function pointer hooks.',
@@ -277,7 +272,6 @@ const defaultGameOptions: AnticheatOption[] = [
   { id: 'Anti Player Attach', name: 'Anti Player Attach', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Player Collision Disable', name: 'Anti Player Collision Disable', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Infinite Roll', name: 'Anti Infinite Roll', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
-  { id: 'Anti Fake Death', name: 'Anti Fake Death', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Heal Spam', name: 'Anti Heal Spam', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Godmode', name: 'Anti Godmode', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Npc Hijack', name: 'Anti Npc Hijack', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
@@ -370,9 +364,6 @@ const defaultNetworkInjectorOptions: AnticheatOption[] = [
   { id: 'Anti Global Voice', name: 'Anti Global Voice', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Inventory Exploit', name: 'Anti Inventory Exploit', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Cheat Ai Detection', name: 'Cheat Ai Detection', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
-  { id: 'Anti Susano', name: 'Anti Susano', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
-  { id: 'Anti TZX', name: 'Anti TZX', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
-  { id: 'Anti Skript', name: 'Anti Skript', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Lua Menu', name: 'Anti Lua Menu', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti NUI Blocker', name: 'Anti NUI Blocker', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti DevTools', name: 'Anti DevTools', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
@@ -387,7 +378,6 @@ const defaultNetworkInjectorOptions: AnticheatOption[] = [
   { id: 'Anti Lua Executor', name: 'Anti Lua Executor', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti AC Scanner', name: 'Anti AC Scanner', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Unauthorized Admin', name: 'Anti Unauthorized Admin', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
-  { id: 'Anti DLL Injection', name: 'Anti DLL Injection', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Bytecode Injection', name: 'Anti Bytecode Injection', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Global Function Hook', name: 'Anti Global Function Hook', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Native Hook', name: 'Anti Native Hook', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
@@ -2307,7 +2297,7 @@ export default function Settings() {
               {renderConfigCard(
                 Swords,
                 "Health & Combat Detections",
-                "Block godmode, infinite stamina, fake death, and health hacks",
+                "Block godmode, infinite stamina, and health hacks",
                 <>
                   {playerOptions
                     .filter((o) =>
@@ -2317,7 +2307,7 @@ export default function Settings() {
                   {gameOptions
                     .filter((o) =>
                       [
-                        'Anti Godmode', 'Anti Fake Death', 'Anti Heal Spam', 'Anti Super Punch',
+                        'Anti Godmode', 'Anti Heal Spam', 'Anti Super Punch',
                         'Anti Infinite Roll', 'Anti Model Changer', 'Anti Ped Scale', 'Anti Ragdoll Abuse'
                       ].includes(o.id)
                     )
@@ -2604,8 +2594,7 @@ export default function Settings() {
                     .filter((o) =>
                       [
                         'Anti Lua Menu', 'Anti Lua Executor', 'Anti Cheat Menu', 'Anti cheat Menu',
-                        'Anti Susano', 'Anti TZX', 'Anti Skript', 'Anti AC Scanner',
-                        'Anti DLL Injection', 'Anti Bytecode Injection'
+                        'Anti AC Scanner', 'Anti Bytecode Injection'
                       ].includes(o.id)
                     )
                     .map((opt) => renderOptionRow(opt, setNetworkOptions))}
