@@ -52,7 +52,15 @@ client.once(readyEventName, async () => {
     console.log(`=================================================`);
     console.log(`🛡️ VexShield Network Bot is Online!`);
     console.log(`🤖 Logged in as: ${client.user.tag}`);
+    console.log(`📡 Connected to ${client.guilds.cache.size} guild(s):`);
+    client.guilds.cache.forEach(g => console.log(`   - ${g.name} (${g.id})`));
     console.log(`=================================================`);
+
+    // Set Explicit Online Status & Presence
+    client.user.setPresence({
+        activities: [{ name: 'VexShield Anticheat', type: ActivityType.Watching }],
+        status: 'online',
+    });
 
     // Initialize Database Table
     await initDb();
@@ -66,8 +74,15 @@ client.once(readyEventName, async () => {
     // Initialize Self-Bot if TOKEN provided
     initSelfBot(client);
 
-    // Set Bot Activity
-    client.user.setActivity('VexShield Anticheat', { type: ActivityType.Watching });
+    // Keep-alive presence refresh every 5 minutes
+    setInterval(() => {
+        if (client.user) {
+            client.user.setPresence({
+                activities: [{ name: 'VexShield Anticheat', type: ActivityType.Watching }],
+                status: 'online',
+            });
+        }
+    }, 5 * 60 * 1000);
 
     // Set Bot Avatar to logo.png
     const LOGO_PATH = path.join(__dirname, 'logo.png');
@@ -80,6 +95,12 @@ client.once(readyEventName, async () => {
         }
     }
 });
+
+client.on('error', (err) => console.error('⚠️ Discord Client Error:', err.message));
+client.on('shardError', (err) => console.error('⚠️ Discord Shard Error:', err.message));
+client.on('shardDisconnect', (event) => console.warn('⚠️ Discord Shard Disconnected:', event));
+client.on('shardReconnecting', () => console.log('🔄 Discord Shard Reconnecting...'));
+client.on('shardResume', () => console.log('✅ Discord Shard Connection Resumed!'));
 
 client.on('interactionCreate', async (interaction) => {
     try {
