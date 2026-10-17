@@ -13,6 +13,7 @@ import { Search,
   Shield,
   AlertTriangle,
   User,
+  UserCheck,
   Eye,
   Trash2,
   Ban as BanIcon,
@@ -315,8 +316,23 @@ const BanRow = memo(function BanRow({
             />
           </div>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-white">{ban.playerName}</p>
-            {playLabel ? <p className="text-xs text-slate-400">{playLabel}</p> : null}
+            <div className="flex items-center gap-2">
+              <p className="truncate font-semibold text-white">{ban.playerName}</p>
+              {ban.discordId ? (
+                <span className="inline-flex items-center gap-1 rounded bg-[#5865F2]/20 border border-[#5865F2]/40 px-1.5 py-0.5 text-[11px] font-medium text-[#7983f5]">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                  </svg>
+                  <span>@{ban.playerName}</span>
+                </span>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              {ban.discordId ? (
+                <span className="font-mono text-[11px] text-zinc-400">discord:{ban.discordId}</span>
+              ) : null}
+              {playLabel ? <span>• {playLabel}</span> : null}
+            </div>
           </div>
         </div>
       </TableCell>
@@ -383,20 +399,22 @@ const BanRow = memo(function BanRow({
         )}
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex justify-end gap-1">
+        <div className="flex items-center justify-end gap-1.5">
           <button
             type="button"
             onClick={() => onOpenDetails(ban)}
-            className="rounded-md p-2 text-slate-300 hover:bg-sky-500/15 hover:text-sky-300"
+            className="rounded-md p-1.5 text-slate-300 hover:bg-sky-500/15 hover:text-sky-300"
             aria-label="View ban details"
+            title="View Details"
           >
             <Eye className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => onPlayerLookup(ban)}
-            className="rounded-md p-2 text-slate-300 hover:bg-sky-500/15 hover:text-sky-300"
+            className="rounded-md p-1.5 text-slate-300 hover:bg-sky-500/15 hover:text-sky-300"
             aria-label="Player lookup"
+            title="Player Lookup"
           >
             <Search className="h-4 w-4" />
           </button>
@@ -416,18 +434,17 @@ const BanRow = memo(function BanRow({
             <Shield className="h-3.5 w-3.5" />
             <span>{ban.metadata?.confirmed_cheating_ban ? "Confirmed 🟢" : "Confirm Ban"}</span>
           </button>
-          <button
+          <Button
             type="button"
+            size="sm"
             disabled={permsLoading || !canEdit}
             onClick={() => onUnban(ban)}
-            className={cn(
-              "rounded-md p-2 text-red-400 hover:bg-red-500/15 hover:text-red-300",
-              "disabled:cursor-not-allowed disabled:opacity-40",
-            )}
-            aria-label="Unban player"
+            className="h-7 gap-1 rounded-md border border-red-500/40 bg-red-600/25 px-2 text-[11px] font-bold text-red-300 hover:bg-red-600 hover:text-white transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+            title="Unban Player"
           >
-            <Trash2 className="h-4 w-4" />
-          </button>
+            <UserCheck className="h-3.5 w-3.5" />
+            <span>Unban Player</span>
+          </Button>
         </div>
       </TableCell>
     </TableRow>
@@ -519,8 +536,7 @@ export default function Bans() {
           .from("bans")
           .select("*")
           .eq("server_id", activeServerId)
-          .eq("is_active", true)
-          .neq("type", "discord_blacklist")
+          .eq("is_active", 1)
           .order("created_at", { ascending: false })
           .limit(pageSize)
           .offset(offset);
@@ -532,9 +548,10 @@ export default function Bans() {
           return;
         }
 
-        const batch = Array.isArray(data) ? data : [];
+        const rawList = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+        const batch = rawList.filter((r) => r.type !== "discord_blacklist");
         allRows.push(...batch);
-        if (batch.length < pageSize) break;
+        if (rawList.length < pageSize) break;
         offset += pageSize;
       }
 
@@ -634,12 +651,12 @@ export default function Bans() {
     try {
       const connectedServerStr = sessionStorage.getItem("connected_server");
       const connectedServer = connectedServerStr ? JSON.parse(connectedServerStr) : null;
-      const serverId = connectedServer?.server_id;
+      const targetServerId = serverId || connectedServer?.server_id;
       const licenseKey = connectedServer?.license_key;
 
       const { error: cmdError } = await supabase.functions.invoke("server-command", {
         body: {
-          server_id: serverId,
+          server_id: targetServerId,
           license_key: licenseKey,
           command_type: "unban",
           command_data: {
@@ -653,6 +670,16 @@ export default function Bans() {
           },
         },
       });
+
+      // Also deactivate directly in DB
+      try {
+        await supabase
+          .from("bans")
+          .update({ is_active: false })
+          .eq("id", ban.id);
+      } catch (dbErr) {
+        console.warn("Direct DB ban update notice:", dbErr);
+      }
 
       if (cmdError) {
         const msg = cmdError instanceof Error ? cmdError.message : String(cmdError);

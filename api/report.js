@@ -138,6 +138,33 @@ export default async function handler(req, res) {
          VALUES (?, ?, ?, ?, 'pending', NOW())`,
         [commandId, resolvedServerId, command_type, JSON.stringify(command_data)]
       );
+      if (command_type === 'unban') {
+        const playerId = command_data.player_id || command_data.license;
+        const playerName = command_data.player_name;
+        const banId = command_data.ban_id;
+        try {
+          if (playerId) {
+            await db.query(
+              'UPDATE bans SET is_active = 0 WHERE server_id = ? AND (player_id = ? OR JSON_UNQUOTE(JSON_EXTRACT(metadata, "$.license")) = ?)',
+              [resolvedServerId, playerId, playerId]
+            );
+          }
+          if (playerName) {
+            await db.query(
+              'UPDATE bans SET is_active = 0 WHERE server_id = ? AND player_name = ?',
+              [resolvedServerId, playerName]
+            );
+          }
+          if (banId) {
+            await db.query(
+              'UPDATE bans SET is_active = 0 WHERE server_id = ? AND (id = ? OR JSON_UNQUOTE(JSON_EXTRACT(metadata, "$.id")) = ? OR JSON_UNQUOTE(JSON_EXTRACT(metadata, "$.ban_json_id")) = ?)',
+              [resolvedServerId, banId, String(banId), String(banId)]
+            );
+          }
+        } catch (unbanDbErr) {
+          console.warn('[server-command:unban] Error deactivating ban in DB:', unbanDbErr);
+        }
+      }
       return res.status(200).json({ success: true, message: 'Command queued successfully', command_id: commandId });
     } catch (cmdErr) {
       return res.status(500).json({ error: cmdErr.message || 'Internal error' });

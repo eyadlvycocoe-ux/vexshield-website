@@ -194,25 +194,80 @@ export default async function handler(req, res) {
       const whereClauses = [];
       const params = [];
 
+      const FILTER_KEYS = new Set(['eq', 'neq', 'gte', 'lte', 'gt', 'lt', 'like', 'ilike', 'in', 'is']);
+
       for (const [key, val] of Object.entries(req.query)) {
         if (['table', 'select', 'order', 'limit', 'offset', 'count', 'head'].includes(key)) continue;
 
-        if (key === 'eq') {
+        if (FILTER_KEYS.has(key)) {
           const list = Array.isArray(val) ? val : [val];
           for (const item of list) {
             const sep = String(item).indexOf(':');
             if (sep > 0) {
               const col = item.slice(0, sep).trim();
-              const v = item.slice(sep + 1);
+              const rawVal = item.slice(sep + 1);
               if (isValidIdentifier(col)) {
-                whereClauses.push(`\`${col}\` = ?`);
-                params.push(v);
+                if (key === 'eq') {
+                  if (rawVal === 'true' || rawVal === '1') {
+                    whereClauses.push(`(\`${col}\` = 1 OR \`${col}\` = 'true')`);
+                  } else if (rawVal === 'false' || rawVal === '0') {
+                    whereClauses.push(`(\`${col}\` = 0 OR \`${col}\` = 'false')`);
+                  } else {
+                    whereClauses.push(`\`${col}\` = ?`);
+                    params.push(rawVal);
+                  }
+                } else if (key === 'neq') {
+                  if (rawVal === 'true' || rawVal === '1') {
+                    whereClauses.push(`(\`${col}\` = 0 OR \`${col}\` != 'true' OR \`${col}\` IS NULL)`);
+                  } else if (rawVal === 'false' || rawVal === '0') {
+                    whereClauses.push(`(\`${col}\` = 1 OR \`${col}\` != 'false' OR \`${col}\` IS NULL)`);
+                  } else {
+                    whereClauses.push(`(\`${col}\` != ? OR \`${col}\` IS NULL)`);
+                    params.push(rawVal);
+                  }
+                } else if (key === 'gte') {
+                  whereClauses.push(`\`${col}\` >= ?`);
+                  params.push(rawVal);
+                } else if (key === 'lte') {
+                  whereClauses.push(`\`${col}\` <= ?`);
+                  params.push(rawVal);
+                } else if (key === 'gt') {
+                  whereClauses.push(`\`${col}\` > ?`);
+                  params.push(rawVal);
+                } else if (key === 'lt') {
+                  whereClauses.push(`\`${col}\` < ?`);
+                  params.push(rawVal);
+                } else if (key === 'like') {
+                  whereClauses.push(`\`${col}\` LIKE ?`);
+                  try { params.push(decodeURIComponent(rawVal)); } catch (_) { params.push(rawVal); }
+                } else if (key === 'ilike') {
+                  whereClauses.push(`LOWER(\`${col}\`) LIKE LOWER(?)`);
+                  try { params.push(decodeURIComponent(rawVal)); } catch (_) { params.push(rawVal); }
+                } else if (key === 'in') {
+                  const inVals = rawVal.split(',').map(s => s.trim()).filter(Boolean);
+                  if (inVals.length > 0) {
+                    whereClauses.push(`\`${col}\` IN (${inVals.map(() => '?').join(', ')})`);
+                    params.push(...inVals);
+                  }
+                } else if (key === 'is') {
+                  if (rawVal === 'null') {
+                    whereClauses.push(`\`${col}\` IS NULL`);
+                  } else if (rawVal === 'not.null' || rawVal === 'not null') {
+                    whereClauses.push(`\`${col}\` IS NOT NULL`);
+                  }
+                }
               }
             }
           }
         } else if (isValidIdentifier(key)) {
-          whereClauses.push(`\`${key}\` = ?`);
-          params.push(val);
+          if (val === 'true' || val === '1' || val === 1 || val === true) {
+            whereClauses.push(`(\`${key}\` = 1 OR \`${key}\` = 'true')`);
+          } else if (val === 'false' || val === '0' || val === 0 || val === false) {
+            whereClauses.push(`(\`${key}\` = 0 OR \`${key}\` = 'false')`);
+          } else {
+            whereClauses.push(`\`${key}\` = ?`);
+            params.push(val);
+          }
         }
       }
 
@@ -342,30 +397,33 @@ export default async function handler(req, res) {
   // ---------------------------------------------------------
   if (req.method === 'PATCH' || req.method === 'PUT') {
     try {
-      let whereCol = null;
-      let whereVal = null;
+      const updateWhereClauses = [];
+      const updateWhereParams = [];
 
       if (req.query.eq) {
-        const eqStr = String(req.query.eq);
-        const sep = eqStr.indexOf(':');
-        if (sep > 0) {
-          whereCol = eqStr.slice(0, sep).trim();
-          whereVal = eqStr.slice(sep + 1);
-        }
-      }
-
-      if (!whereCol) {
-        for (const [k, v] of Object.entries(req.query)) {
-          if (!['table', 'select', 'order', 'limit', 'offset', 'count', 'head', 'eq'].includes(k) && isValidIdentifier(k)) {
-            whereCol = k;
-            whereVal = v;
-            break;
+        const list = Array.isArray(req.query.eq) ? req.query.eq : [req.query.eq];
+        for (const item of list) {
+          const sep = String(item).indexOf(':');
+          if (sep > 0) {
+            const col = item.slice(0, sep).trim();
+            const val = item.slice(sep + 1);
+            if (isValidIdentifier(col)) {
+              updateWhereClauses.push(`\`${col}\` = ?`);
+              updateWhereParams.push(val);
+            }
           }
         }
       }
 
+      for (const [k, v] of Object.entries(req.query)) {
+        if (!['table', 'select', 'order', 'limit', 'offset', 'count', 'head', 'eq'].includes(k) && isValidIdentifier(k)) {
+          updateWhereClauses.push(`\`${k}\` = ?`);
+          updateWhereParams.push(v);
+        }
+      }
+
       // If PUT without where filter, treat as UPSERT
-      if (!whereCol && req.method === 'PUT' && body && typeof body === 'object') {
+      if (updateWhereClauses.length === 0 && req.method === 'PUT' && body && typeof body === 'object') {
         const row = { ...body };
         if (!row.id) row.id = randomUUID();
         for (const k in row) {
@@ -389,7 +447,7 @@ export default async function handler(req, res) {
         }
       }
 
-      if (!whereCol || !isValidIdentifier(whereCol)) {
+      if (updateWhereClauses.length === 0) {
         return res.status(400).json({ error: 'Filter required for update' });
       }
 
@@ -408,20 +466,21 @@ export default async function handler(req, res) {
       }
 
       const setClause = updateKeys.map(k => `\`${k}\` = ?`).join(', ');
-      const updateValues = [...updateKeys.map(k => updateData[k]), whereVal];
+      const updateValues = [...updateKeys.map(k => updateData[k]), ...updateWhereParams];
 
-      const sql = `UPDATE \`${table}\` SET ${setClause} WHERE \`${whereCol}\` = ?`;
+      const sql = `UPDATE \`${table}\` SET ${setClause} WHERE ${updateWhereClauses.join(' AND ')}`;
       const [result] = await executeQueryWithRetry(db, sql, updateValues);
 
       // If server_settings or servers table was updated, queue live reload
-      if ((table === 'server_settings' || table === 'servers') && whereCol === 'server_id') {
+      if (table === 'server_settings' || table === 'servers') {
         try {
-          const sid = String(whereVal).trim();
-          const [pending] = await executeQueryWithRetry(
-            db,
-            "SELECT id FROM dashboard_commands WHERE server_id = ? AND command_type = 'update_settings' AND status = 'pending' LIMIT 1",
-            [sid]
-          );
+          const sid = String(body.server_id || updateWhereParams[0] || '').trim();
+          if (sid) {
+            const [pending] = await executeQueryWithRetry(
+              db,
+              "SELECT id FROM dashboard_commands WHERE server_id = ? AND command_type = 'update_settings' AND status = 'pending' LIMIT 1",
+              [sid]
+            );
           if (!pending || pending.length === 0) {
             await executeQueryWithRetry(
               db,
