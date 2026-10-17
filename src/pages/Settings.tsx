@@ -183,6 +183,7 @@ const OPTION_TOOLTIPS: Record<string, string> = {
   'Anti Lua Menu': 'Detects and blocks client-side execution of Lua cheat menus.',
   'Anti NUI Blocker': 'Prevents NUI focus hijacking and overlay blocking.',
   'Anti DevTools': 'Prevents browser DevTools injection and runtime debugging.',
+  'Clipboard Scanner': 'Detects and blocks blacklisted cheater clipboard contents, cheat menu names, and injection strings.',
   'Anti Cheat Menu': 'Detects active cheat menu memory signatures.',
   'Anti Cheat Menu Functions': 'Blocks cheat menu hook functions.',
   'Anti Cheat Spawn Functions': 'Blocks menu-based entity spawn helper functions.',
@@ -367,6 +368,7 @@ const defaultNetworkInjectorOptions: AnticheatOption[] = [
   { id: 'Anti Lua Menu', name: 'Anti Lua Menu', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti NUI Blocker', name: 'Anti NUI Blocker', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti DevTools', name: 'Anti DevTools', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
+  { id: 'Clipboard Scanner', name: 'Clipboard Scanner', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Cheat Menu', name: 'Anti Cheat Menu', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Cheat Menu Functions', name: 'Anti Cheat Menu Functions', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
   { id: 'Anti Cheat Spawn Functions', name: 'Anti Cheat Spawn Functions', enabled: true, action: 'ban', log: false, l1: true, l2: true, l3: true },
@@ -2631,7 +2633,7 @@ export default function Settings() {
                         'Anti Trigger Event', 'blacklisted Trigger', 'Anti Event Token Bypass',
                         'Anti Spam Trigger', 'Anti Resource Injection', 'Anti Stop Resource',
                         'Anti Unknown Resource', 'Anti Spoof', 'Anti Cipher', 'Anti Vpn',
-                        'Anti Afk', 'Anti NUI Blocker', 'Anti DevTools', 'Anti Voice Exploits',
+                        'Anti Afk', 'Anti NUI Blocker', 'Anti DevTools', 'Clipboard Scanner', 'Anti Voice Exploits',
                         'Anti Global Voice', 'Anti Inventory Exploit', 'Cheat Ai Detection',
                         'Anti Unauthorized Admin'
                       ].includes(o.id)

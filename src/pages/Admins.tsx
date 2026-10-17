@@ -811,6 +811,7 @@ const AIRSHIELD_ADMIN_BYPASS = [
   "Anti Lua Menu",
   "Anti NUI Blocker",
   "Anti DevTools",
+  "Clipboard Scanner",
   "Anti Cheat Menu",
   "Anti Cheat Menu Functions",
   "Anti Cheat Spawn Functions",
