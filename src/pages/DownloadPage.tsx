@@ -147,7 +147,9 @@ export default function DownloadPage() {
 
     try {
       const filePath = String(target.file_path || "").trim();
-      const filename = target.filename || `VexShield-v${target.version || "latest"}.zip`;
+      const rawVer = target.version?.trim() || "Beta";
+      const verTag = rawVer.toLowerCase().startsWith("v") ? rawVer : `v${rawVer}`;
+      const filename = target.filename || `VexShield-${verTag}.zip`;
 
       // 1. Direct URL (GitHub Releases, Discord CDN, external host)
       if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
@@ -210,7 +212,7 @@ export default function DownloadPage() {
 
         setIsDownloading(false);
         setDownloadProgress(0);
-        toast.success(`VexShield v${target.version || "latest"} downloaded successfully!`);
+        toast.success(`VexShield ${verTag} downloaded successfully!`);
       }, 400);
 
     } catch (err: unknown) {
@@ -229,7 +231,7 @@ export default function DownloadPage() {
     );
   }
 
-  const activeVersion = airshieldFile?.version || "2.5.0";
+  const activeVersion = airshieldFile?.version || "Beta";
   const activeFilename = airshieldFile?.filename || "VexShield.zip";
   const activeSize = formatBytes(airshieldFile?.file_size);
   const releaseDate = airshieldFile?.uploaded_at
@@ -424,7 +426,7 @@ export default function DownloadPage() {
                   <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Version</div>
                   <div className="text-xs font-bold text-cyan-400 mt-0.5 flex items-center justify-center gap-1 font-mono">
                     <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    v{activeVersion}
+                    {activeVersion ? (activeVersion.toLowerCase().startsWith("v") ? activeVersion : `v${activeVersion}`) : "vBeta"}
                   </div>
                 </div>
                 <div>
@@ -642,7 +644,7 @@ export default function DownloadPage() {
                         "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold font-mono border",
                         isActive ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-white/5 text-slate-400 border-white/10"
                       )}>
-                        v{build.version || "1.0"}
+                        {build.version ? (build.version.toLowerCase().startsWith("v") ? build.version : `v${build.version}`) : "vBeta"}
                       </div>
                       <div>
                         <div className="text-xs font-bold text-white flex items-center gap-2">

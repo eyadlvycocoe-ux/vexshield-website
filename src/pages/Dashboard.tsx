@@ -17,7 +17,7 @@ export default function Dashboard() {
     peakPlayers: 0,
     onlinePlayers: 0
   });
-  const [acVersion, setAcVersion] = useState('—');
+  const [acVersion, setAcVersion] = useState('vBeta');
 
   useEffect(() => {
     if (activeServer) {
@@ -43,7 +43,7 @@ export default function Dashboard() {
           .maybeSingle();
         fileData = fallback;
       }
-      setAcVersion(fileData?.version?.trim() || '—');
+      setAcVersion(fileData?.version?.trim() || 'vBeta');
 
       // Get stats
       const { data: snapshot } = await supabase

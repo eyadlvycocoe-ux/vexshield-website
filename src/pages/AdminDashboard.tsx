@@ -344,7 +344,7 @@ export default function AdminDashboard() {
     }
 
     if (!fileVersion) {
-      toast.error("Please enter a version number (e.g. 2.5.0)");
+      toast.error("Please enter a version number (e.g. vBeta)");
       return;
     }
 
@@ -391,7 +391,7 @@ export default function AdminDashboard() {
       return;
     }
     if (!fileVersion.trim()) {
-      toast.error("Please enter a version number (e.g. 2.5.0)");
+      toast.error("Please enter a version number (e.g. vBeta)");
       return;
     }
 
@@ -1013,7 +1013,7 @@ export default function AdminDashboard() {
 
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                       <Input
-                        placeholder="Build Version (e.g. 2.5.0)"
+                        placeholder="Build Version (e.g. vBeta)"
                         value={fileVersion}
                         onChange={(e) => setFileVersion(e.target.value)}
                         className="w-full sm:w-44 bg-black/50 border-white/10 rounded-xl h-10 text-xs text-white"
@@ -1039,7 +1039,7 @@ export default function AdminDashboard() {
                       <div className="sm:col-span-3">
                         <Label className="text-[11px] text-slate-400 mb-1 block">Version</Label>
                         <Input
-                          placeholder="e.g. 2.5.0"
+                          placeholder="e.g. vBeta"
                           value={fileVersion}
                           onChange={(e) => setFileVersion(e.target.value)}
                           className="bg-black/50 border-white/10 rounded-xl h-10 text-xs text-white"
@@ -1119,7 +1119,7 @@ export default function AdminDashboard() {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-mono text-sm font-bold text-white">{file.filename}</span>
                                 <Badge variant="outline" className="border-cyan-500/40 text-cyan-300 font-mono text-[10px]">
-                                  v{file.version}
+                                  {file.version ? (file.version.toLowerCase().startsWith("v") ? file.version : `v${file.version}`) : "vBeta"}
                                 </Badge>
                                 {active && (
                                   <Badge className="bg-emerald-500/25 text-emerald-300 border-emerald-500/40 text-[10px] font-bold shadow-[0_0_10px_rgba(16,185,129,0.3)]">

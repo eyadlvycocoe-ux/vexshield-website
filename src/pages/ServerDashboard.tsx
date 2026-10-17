@@ -386,7 +386,7 @@ export default function ServerDashboard() {
           (snapshotData?.metadata as { version?: string; ac_version?: string } | null)?.version?.trim() ||
           (snapshotData?.metadata as { version?: string; ac_version?: string } | null)?.ac_version?.trim() ||
           null;
-        const resolvedAcVersion = installedVersion || activeAc?.version?.trim() || "1.0.0";
+        const resolvedAcVersion = installedVersion || activeAc?.version?.trim() || "Beta";
         setAcVersion(resolvedAcVersion);
 
         const liveCount = effectiveLivePlayerCount(snapshotData ?? undefined);
@@ -862,8 +862,8 @@ export default function ServerDashboard() {
               {server.status === "online" ? "Online" : "Offline"}
             </span>
 
-            <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono font-medium text-zinc-400">
-              V1
+            <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono font-medium text-cyan-400">
+              vBeta
             </span>
 
             {latestAcVersion && acVersion !== latestAcVersion && (
@@ -871,7 +871,7 @@ export default function ServerDashboard() {
                 variant="outline"
                 size="sm"
                 className="h-7 border-amber-500/30 bg-amber-500/10 px-2.5 text-xs font-medium text-amber-300 hover:bg-amber-500/20 rounded-lg"
-                onClick={() => navigate(isDemo ? "/demo/download" : `/${serverId}/downloads`)}
+                onClick={() => navigate(isDemo ? "/demo/download" : `/${serverId}/download`)}
               >
                 Update available
               </Button>
@@ -949,8 +949,8 @@ export default function ServerDashboard() {
               <div className="text-xl font-bold text-white tracking-tight truncate">
                 {serverDisplayName}
               </div>
-              <div className="text-xs text-zinc-400 mt-1 font-mono">
-                v{acVersion || "1.0.0"}
+              <div className="text-xs text-cyan-400/90 mt-1 font-mono">
+                {acVersion ? (acVersion.toLowerCase().startsWith("v") ? acVersion : `v${acVersion}`) : "vBeta"}
               </div>
             </div>
           </div>

@@ -142,7 +142,7 @@ export default function Demo() {
             <div className="flex flex-wrap items-center justify-end gap-4 text-sm">
               <div className="min-w-[5.5rem] text-center">
                 <p className="text-[13px] font-medium text-slate-400">AC Version</p>
-                <p className="text-lg font-bold tabular-nums text-sky-400">6.0.0.8</p>
+                <p className="text-lg font-bold tabular-nums text-cyan-400">vBeta</p>
               </div>
               <div className="min-w-[14rem]">
                 <p className="text-[13px] font-medium text-slate-400">Server IP</p>

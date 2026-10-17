@@ -1,7 +1,7 @@
 {
   "common": {
     "brand": "VexShield",
-    "beta": "V1",
+    "beta": "vBeta",
     "languageAria": "اختر اللغة",
     "cancel": "إلغاء",
     "copy": "نسخ"
@@ -522,11 +522,11 @@
     "close": "إغلاق العرض",
     "leftTitle": "نسخة الإطلاق أصبحت قريبة.",
     "dropTitle": "عرض إطلاق مؤقت",
-    "dropDescription": "الزوار الأوائل سيحصلون على خصم إطلاق V1 بعد الإصدار.",
-    "badge": "عرض إطلاق V1",
+    "dropDescription": "الزوار الأوائل سيحصلون على خصم إطلاق vBeta بعد الإصدار.",
+    "badge": "عرض إطلاق vBeta",
     "afterLaunch": "بعد الإطلاق",
-    "description": "هذا تنبيه قبل الإطلاق فقط. الخصم سيكون متاحًا عند إطلاق VexShield V1 رسميًا.",
-    "launchesIn": "ينطلق VexShield V1 خلال",
+    "description": "هذا تنبيه قبل الإطلاق فقط. الخصم سيكون متاحًا عند إطلاق VexShield vBeta رسميًا.",
+    "launchesIn": "ينطلق VexShield vBeta خلال",
     "days": "أيام",
     "hours": "ساعات",
     "minutes": "دقائق",

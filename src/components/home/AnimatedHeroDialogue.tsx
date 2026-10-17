@@ -7,14 +7,14 @@ export function AnimatedHeroDialogue() {
   const [activeStep, setActiveStep] = useState(0);
   const [typingText1, setTypingText1] = useState("");
   const [typingText2, setTypingText2] = useState("");
-  const [buildVersion, setBuildVersion] = useState<string>("1.0.0.2");
+  const [buildVersion, setBuildVersion] = useState<string>("Beta");
 
   useEffect(() => {
-    fetch(apiUrl("/api/anticheat/builds"))
+    fetch(apiUrl("/api/db/anticheat_files?select=version,is_active&order=uploaded_at:DESC&limit=1"))
       .then((r) => r.json())
       .then((data) => {
-        if (data?.files?.airshield?.version) {
-          setBuildVersion(data.files.airshield.version);
+        if (Array.isArray(data) && data[0]?.version) {
+          setBuildVersion(data[0].version.trim());
         }
       })
       .catch(() => {});
