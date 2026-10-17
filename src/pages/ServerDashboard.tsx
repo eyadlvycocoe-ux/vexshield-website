@@ -303,16 +303,29 @@ export default function ServerDashboard() {
       }
 
       try {
-        // First, try to get server data from Supabase servers table (for enhanced info like IP)
-        const { data: serverData, error: serverError } = await supabase
-          .from("servers")
-          .select("*")
-          .eq("server_id", serverId)
-          .maybeSingle();
+        let summary: any = null;
+        try {
+          const summaryRes = await supabase
+            .from("dashboard_summary")
+            .select("*")
+            .eq("server_id", serverId)
+            .maybeSingle();
+          if (summaryRes?.data && (summaryRes.data.server || summaryRes.data.snapshot || summaryRes.data.bansCount !== undefined)) {
+            summary = summaryRes.data;
+          }
+        } catch (_) {}
 
-        if (serverError) throw serverError;
+        let serverData = summary?.server || null;
+        if (!serverData && !summary) {
+          const { data, error: serverError } = await supabase
+            .from("servers")
+            .select("*")
+            .eq("server_id", serverId)
+            .maybeSingle();
+          if (serverError) throw serverError;
+          serverData = data;
+        }
 
-        // If Supabase query succeeds and returns data, use it
         if (serverData) {
           setNotFound(false);
           setLoadError(false);
@@ -321,9 +334,6 @@ export default function ServerDashboard() {
           setRateLimited(false);
           setLoading(false);
         } else {
-          // If Supabase query fails or returns no data, use session data as fallback
-          
-          // Try to recover session if needed
           if (attempt === 0) {
             const recovered = await recoverConnectedServerSession(serverId);
             if (recovered?.license_key && recovered.license_key !== auth.license_key) {
@@ -332,10 +342,6 @@ export default function ServerDashboard() {
             }
           }
 
-          // Get session data (either recovered or existing). `auth` is already validated by
-          // checkAuth() (it navigates home otherwise), so use it as a guaranteed fallback. This
-          // prevents a transient sessionStorage read race from dropping the user onto a false
-          // "Server Not Found" page when they clearly have a valid connected session.
           const sessionData = readConnectedServer() || await recoverConnectedServerSession(serverId);
           const fallbackSource = sessionData ?? auth;
 
@@ -357,21 +363,35 @@ export default function ServerDashboard() {
           setLoading(false);
         }
 
-        const [snapshotRes, settingsRes, acFilesRes] = await Promise.all([
-          supabase.from("players_snapshots").select("*").eq("server_id", serverId).maybeSingle(),
-          supabase.from("server_settings").select("settings").eq("server_id", serverId).maybeSingle(),
-          supabase
-            .from("anticheat_files")
-            .select("version, is_active")
-            .order("uploaded_at", { ascending: false })
-            .limit(5),
-        ]);
+        let snapshotData = summary ? summary.snapshot : null;
+        let settingsVal = summary ? summary.settings : null;
+        let resolvedAcVersion = summary ? (summary.anticheat || "Beta") : null;
 
-        const snapshotData = snapshotRes.data;
+        if (!summary) {
+          const [snapshotRes, settingsRes, acFilesRes] = await Promise.all([
+            supabase.from("players_snapshots").select("*").eq("server_id", serverId).maybeSingle(),
+            supabase.from("server_settings").select("settings").eq("server_id", serverId).maybeSingle(),
+            supabase
+              .from("anticheat_files")
+              .select("version, is_active")
+              .order("uploaded_at", { ascending: false })
+              .limit(5),
+          ]);
+          snapshotData = snapshotRes.data;
+          settingsVal = settingsRes?.data?.settings;
+          const acList = Array.isArray(acFilesRes.data) ? acFilesRes.data : [];
+          const activeAc = acList.find((f: any) => f.is_active) || acList[0];
+          setLatestAcVersion(activeAc?.version?.trim() || null);
+          const installedVersion =
+            (snapshotData?.metadata as { version?: string; ac_version?: string } | null)?.version?.trim() ||
+            (snapshotData?.metadata as { version?: string; ac_version?: string } | null)?.ac_version?.trim() ||
+            null;
+          resolvedAcVersion = installedVersion || activeAc?.version?.trim() || "Beta";
+        }
+
         applySnapshot(snapshotData);
 
-        if (settingsRes?.data?.settings) {
-          const settingsVal = settingsRes.data.settings;
+        if (settingsVal) {
           const settingsObj = typeof settingsVal === "string"
             ? (() => { try { return JSON.parse(settingsVal); } catch { return {}; } })()
             : ((settingsVal as Record<string, unknown> | null) ?? {});
@@ -379,45 +399,55 @@ export default function ServerDashboard() {
           if (logoVal && typeof logoVal === "string") setServerSettingsLogo(logoVal);
         }
 
-        const acList = Array.isArray(acFilesRes.data) ? acFilesRes.data : [];
-        const activeAc = acList.find((f: any) => f.is_active) || acList[0];
-        setLatestAcVersion(activeAc?.version?.trim() || null);
-        const installedVersion =
-          (snapshotData?.metadata as { version?: string; ac_version?: string } | null)?.version?.trim() ||
-          (snapshotData?.metadata as { version?: string; ac_version?: string } | null)?.ac_version?.trim() ||
-          null;
-        const resolvedAcVersion = installedVersion || activeAc?.version?.trim() || "Beta";
-        setAcVersion(resolvedAcVersion);
+        setAcVersion(resolvedAcVersion || "Beta");
 
         const liveCount = effectiveLivePlayerCount(snapshotData ?? undefined);
         const activity = saveActivityHistory(serverId!, liveCount, loadActivityHistory(serverId!));
         setChartData(activity);
 
-        const [
-          bansRes,
-          banCountRes,
-          kickCountRes,
-          warnCountRes,
-          recentKicksRes,
-        ] = await Promise.all([
-          supabase
-            .from("bans")
-            .select("player_name, reason, created_at")
-            .eq("server_id", serverId)
-            .order("created_at", { ascending: false })
-            .limit(150),
-          supabase.from("bans").select("*", { count: "exact", head: true }).eq("server_id", serverId),
-          supabase.from("kicks").select("*", { count: "exact", head: true }).eq("server_id", serverId),
-          supabase.from("warns").select("*", { count: "exact", head: true }).eq("server_id", serverId),
-          supabase
-            .from("kicks")
-            .select("player_name, reason, created_at")
-            .eq("server_id", serverId)
-            .order("created_at", { ascending: false })
-            .limit(2),
-        ]);
+        let bansList: any[] = [];
+        let totalBans = 0;
+        let totalKicks = 0;
+        let totalWarns = 0;
+        let recentKicksList: any[] = [];
 
-        const bansList = Array.isArray(bansRes.data) ? bansRes.data : [];
+        if (summary) {
+          bansList = summary.recentBans || [];
+          totalBans = summary.bansCount || 0;
+          totalKicks = summary.kicksCount || 0;
+          totalWarns = summary.warnsCount || 0;
+          recentKicksList = summary.recentKicks || [];
+        } else {
+          const [
+            bansRes,
+            banCountRes,
+            kickCountRes,
+            warnCountRes,
+            recentKicksRes,
+          ] = await Promise.all([
+            supabase
+              .from("bans")
+              .select("player_name, reason, created_at")
+              .eq("server_id", serverId)
+              .order("created_at", { ascending: false })
+              .limit(150),
+            supabase.from("bans").select("*", { count: "exact", head: true }).eq("server_id", serverId),
+            supabase.from("kicks").select("*", { count: "exact", head: true }).eq("server_id", serverId),
+            supabase.from("warns").select("*", { count: "exact", head: true }).eq("server_id", serverId),
+            supabase
+              .from("kicks")
+              .select("player_name, reason, created_at")
+              .eq("server_id", serverId)
+              .order("created_at", { ascending: false })
+              .limit(2),
+          ]);
+          bansList = Array.isArray(bansRes.data) ? bansRes.data : [];
+          totalBans = banCountRes.count || 0;
+          totalKicks = kickCountRes.count || 0;
+          totalWarns = warnCountRes.count || 0;
+          recentKicksList = (recentKicksRes.data as any[]) || [];
+        }
+
         const reasonCounts = new Map<string, number>();
         bansList.forEach((ban: any) => {
           const raw = (ban.reason || "Unknown detection").trim();
@@ -432,9 +462,9 @@ export default function ServerDashboard() {
         );
 
         const nextStats = {
-          totalBans: banCountRes.count || 0,
-          totalKicks: kickCountRes.count || 0,
-          totalWarns: warnCountRes.count || 0,
+          totalBans,
+          totalKicks,
+          totalWarns,
           peakPlayers: liveCount,
         };
         setStats(nextStats);

@@ -13,7 +13,8 @@ function getPool() {
       database: process.env.DB_NAME || 'defaultdb',
       ssl: { rejectUnauthorized: false },
       waitForConnections: true,
-      connectionLimit: 1,
+      connectionLimit: 10,
+      queueLimit: 0,
       connectTimeout: 7000,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
@@ -136,7 +137,17 @@ export default async function handler(req, res) {
       // Special Accelerated Consolidated Dashboard Summary
       // -------------------------------------------------------
       if (table.toLowerCase() === 'dashboard_summary') {
-        const sid = String(req.query.server_id || req.query.sid || '').trim();
+        let sid = String(req.query.server_id || req.query.sid || '').trim();
+        if (!sid && req.query.eq) {
+          const list = Array.isArray(req.query.eq) ? req.query.eq : [req.query.eq];
+          for (const item of list) {
+            const sep = String(item).indexOf(':');
+            if (sep > 0 && item.slice(0, sep).trim() === 'server_id') {
+              sid = item.slice(sep + 1).trim();
+              break;
+            }
+          }
+        }
         if (!sid) {
           return res.status(400).json({ error: 'server_id required for dashboard_summary' });
         }
@@ -481,12 +492,13 @@ export default async function handler(req, res) {
               "SELECT id FROM dashboard_commands WHERE server_id = ? AND command_type = 'update_settings' AND status = 'pending' LIMIT 1",
               [sid]
             );
-          if (!pending || pending.length === 0) {
-            await executeQueryWithRetry(
-              db,
-              "INSERT INTO dashboard_commands (id, server_id, command_type, command_data, status) VALUES (?, ?, 'update_settings', ?, 'pending')",
-              [randomUUID(), sid, JSON.stringify({ fetch_settings: true })]
-            );
+            if (!pending || pending.length === 0) {
+              await executeQueryWithRetry(
+                db,
+                "INSERT INTO dashboard_commands (id, server_id, command_type, command_data, status) VALUES (?, ?, 'update_settings', ?, 'pending')",
+                [randomUUID(), sid, JSON.stringify({ fetch_settings: true })]
+              );
+            }
           }
         } catch (_) {}
       }
