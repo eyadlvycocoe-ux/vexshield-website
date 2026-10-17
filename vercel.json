@@ -4,14 +4,6 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/license/redeem",
-      "destination": "/api/auth/session.js?view=redeem_license"
-    },
-    {
-      "source": "/api/license-redeem",
-      "destination": "/api/auth/session.js?view=redeem_license"
-    },
-    {
       "source": "/api/db/:table",
       "destination": "/api/db.js?table=:table"
     },
