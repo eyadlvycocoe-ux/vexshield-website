@@ -26,17 +26,20 @@ async function getPool() {
         : undefined;
 
     for (const pwd of POSSIBLE_PASSWORDS) {
+        let testPool = null;
         try {
-            const testPool = mysql.createPool({
+            testPool = mysql.createPool({
                 host,
                 port,
                 user,
                 password: pwd,
                 database,
                 waitForConnections: true,
-                connectionLimit: 10,
+                connectionLimit: 3,
                 queueLimit: 0,
                 ssl,
+                enableKeepAlive: true,
+                keepAliveInitialDelay: 10000,
             });
 
             const conn = await testPool.getConnection();
@@ -47,7 +50,9 @@ async function getPool() {
             activePool = testPool;
             return activePool;
         } catch (err) {
-            // Try next password candidate
+            if (testPool) {
+                await testPool.end().catch(() => { });
+            }
         }
     }
 
@@ -67,7 +72,7 @@ async function getPool() {
 }
 
 /** Initialize database tables required for Discord bot connections */
-async function initDb() {
+async function initDb(retries = 5) {
     try {
         const pool = await getPool();
         const connection = await pool.getConnection();
@@ -87,6 +92,10 @@ async function initDb() {
         console.log('✅ Database initialized & discord_bot_connections table ready.');
     } catch (error) {
         console.error('❌ Failed to initialize database table:', error.message);
+        if (retries > 0) {
+            console.log(`🔄 Retrying database initialization in 4s (${retries} retries left)...`);
+            setTimeout(() => initDb(retries - 1), 4000);
+        }
     }
 }
 
