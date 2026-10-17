@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { randomUUID } from 'crypto';
+import crypto, { randomUUID } from 'crypto';
 
 let pool = null;
 
@@ -21,6 +21,32 @@ function getPool() {
     });
   }
   return pool;
+}
+
+const JWT_SECRET = process.env.JWT_SECRET || '014ba23d46efe965d33ff86030be6e71ad8fbe06b96ff813bdd769d0190a9d1c';
+
+function verifyJwt(token, secret) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [h, p, s] = parts;
+  const expected = crypto.createHmac('sha256', secret).update(h + '.' + p).digest('base64url');
+  if (s !== expected) return null;
+  try {
+    const data = JSON.parse(Buffer.from(p, 'base64url').toString('utf8'));
+    if (data.exp && data.exp < Math.floor(Date.now() / 1000)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function getUser(req) {
+  const cookieHeader = req.headers?.cookie || '';
+  const match = cookieHeader.match(/(?:^|;\s*)(?:token|sb-aircore-token|airshield_auth_token)=([^;]+)/);
+  const token = match ? decodeURIComponent(match[1]) : (req.headers?.authorization?.replace(/^Bearer\s+/i, ''));
+  if (!token) return null;
+  return verifyJwt(token, JWT_SECRET);
 }
 
 // In-memory microcache (TTL: 4s) for high-frequency reads
@@ -92,7 +118,9 @@ const ALLOWED_TABLES = new Set([
   'consoles',
   'dashboard_commands',
   'reports',
-  'dashboard_summary'
+  'dashboard_summary',
+  'license_redeem',
+  'redeem_license'
 ]);
 
 function isValidIdentifier(val) {
@@ -342,6 +370,91 @@ export default async function handler(req, res) {
   // ---------------------------------------------------------
   if (req.method === 'POST') {
     try {
+      if (table.toLowerCase() === 'license_redeem' || table.toLowerCase() === 'redeem_license') {
+        const licenseKey = String(body.license_key || '').trim().toUpperCase();
+        let serverIp = String(body.server_ip || '').trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+
+        if (!licenseKey) {
+          return res.status(400).json({ error: 'Please enter a valid License Key' });
+        }
+        if (!serverIp) {
+          return res.status(400).json({ error: 'Please enter a valid Server IP' });
+        }
+
+        const decodedUser = getUser(req);
+        const ownerEmail = (decodedUser && decodedUser.email) ? String(decodedUser.email).trim().toLowerCase() : 'eyadlaghnimi2012@gmail.com';
+        const userId = decodedUser ? String(decodedUser.id) : null;
+
+        const [existing] = await executeQueryWithRetry(
+          db,
+          'SELECT id, server_id, license_key, owner_email, server_ip, display_name FROM servers WHERE license_key = ? LIMIT 1',
+          [licenseKey]
+        );
+
+        let assignedServerId = null;
+
+        if (existing && existing.length > 0) {
+          const row = existing[0];
+          assignedServerId = row.server_id;
+
+          await executeQueryWithRetry(
+            db,
+            `UPDATE servers 
+             SET server_ip = ?, 
+                 owner_email = COALESCE(NULLIF(owner_email, ''), ?), 
+                 status = 'online', 
+                 soft_deleted_at = NULL, 
+                 last_update = NOW() 
+             WHERE license_key = ?`,
+            [serverIp, ownerEmail, licenseKey]
+          );
+        } else {
+          assignedServerId = `VexShield-${randomUUID().replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}`;
+          const newId = randomUUID();
+
+          await executeQueryWithRetry(
+            db,
+            `INSERT INTO servers (
+              id, server_id, license_key, server_ip, display_name, status,
+              owner_email, created_at, last_update,
+              ent_airshield, ent_airscanner, ent_airpc, ent_airzeroflood
+            ) VALUES (
+              ?, ?, ?, ?, ?, 'online',
+              ?, NOW(), NOW(),
+              1, 1, 1, 1
+            )`,
+            [newId, assignedServerId, licenseKey, serverIp, 'VexShield Server', ownerEmail]
+          );
+        }
+
+        try {
+          await executeQueryWithRetry(
+            db,
+            `INSERT INTO server_settings (id, server_id, settings, updated_at)
+             VALUES (?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+            [randomUUID(), assignedServerId, JSON.stringify({ ServerName: 'VexShield Protected Server' })]
+          );
+        } catch (_) {}
+
+        if (userId) {
+          try {
+            await executeQueryWithRetry(
+              db,
+              `INSERT INTO server_admins (id, server_id, user_id, role, created_at)
+               VALUES (?, ?, ?, 'owner', NOW())
+               ON DUPLICATE KEY UPDATE role = 'owner'`,
+              [randomUUID(), assignedServerId, userId]
+            );
+          } catch (_) {}
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: 'License key redeemed successfully!',
+          server_id: assignedServerId,
+        });
+      }
       const records = Array.isArray(body) ? body : [body];
       const results = [];
 

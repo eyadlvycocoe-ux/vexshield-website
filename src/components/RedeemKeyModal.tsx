@@ -47,7 +47,7 @@ export function RedeemKeyModal({ open, onOpenChange, onSuccess }: RedeemKeyModal
     setLoading(true);
     try {
       await ensureCsrfCookie();
-      const res = await fetch(apiUrl("/api/license/redeem"), {
+      const res = await fetch(apiUrl("/api/db/license_redeem"), {
         method: "POST",
         credentials: "include",
         headers: apiMutationHeaders(),
