@@ -43,6 +43,9 @@ import {
   TrendingUp,
   Zap,
   RefreshCw,
+  Download,
+  Link as LinkIcon,
+  Globe,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getApiBaseUrl, apiUrl, getStoredAuthToken } from "@/lib/api-base";
@@ -123,6 +126,9 @@ export default function AdminDashboard() {
 
   const [fileVersion, setFileVersion] = useState("");
   const [uploadProduct, setUploadProduct] = useState<"airshield">("airshield");
+  const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
+  const [directDownloadUrl, setDirectDownloadUrl] = useState("");
+  const [directFileName, setDirectFileName] = useState("VexShield.zip");
   const [shopPriceRows, setShopPriceRows] = useState<any[]>([]);
   const [shopPriceDraft, setShopPriceDraft] = useState<Record<string, string>>({});
   const [shopLoading, setShopLoading] = useState(false);
@@ -338,7 +344,7 @@ export default function AdminDashboard() {
     }
 
     if (!fileVersion) {
-      toast.error("Please enter a version number (e.g. 1.0.0)");
+      toast.error("Please enter a version number (e.g. 2.5.0)");
       return;
     }
 
@@ -351,30 +357,101 @@ export default function AdminDashboard() {
 
       if (uploadError) throw uploadError;
 
-      const sameProduct = anticheatFiles.filter(
-        (f) => (f.product || "airshield") === uploadProduct
-      );
-      const shouldBeActive = sameProduct.length === 0 ? 1 : 0;
+      // Deactivate older production builds so new upload is active immediately
+      await supabase
+        .from("anticheat_files")
+        .update({ is_active: 0 })
+        .eq("product", "airshield");
 
       const { error: dbError } = await supabase.from("anticheat_files").insert({
         filename: file.name,
         file_path: filePath,
         file_size: file.size,
-        version: fileVersion,
-        is_active: shouldBeActive,
+        version: fileVersion.trim(),
+        is_active: 1,
         uploaded_at: new Date().toISOString(),
         product: uploadProduct,
       });
 
       if (dbError) throw dbError;
 
-      toast.success("VexShield package uploaded successfully");
+      toast.success(`VexShield v${fileVersion.trim()} uploaded and set to Active Production!`);
       setFileVersion("");
       loadAnticheatFiles();
     } catch (error: any) {
       toast.error(error.message || "Failed to upload file");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRegisterUrlBuild = async () => {
+    if (!directDownloadUrl.trim()) {
+      toast.error("Please enter a valid direct download URL");
+      return;
+    }
+    if (!fileVersion.trim()) {
+      toast.error("Please enter a version number (e.g. 2.5.0)");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Deactivate older production builds
+      await supabase
+        .from("anticheat_files")
+        .update({ is_active: 0 })
+        .eq("product", "airshield");
+
+      const fname = directFileName.trim() || `VexShield-v${fileVersion.trim()}.zip`;
+      const { error: dbError } = await supabase.from("anticheat_files").insert({
+        filename: fname,
+        file_path: directDownloadUrl.trim(),
+        file_size: 15 * 1024 * 1024,
+        version: fileVersion.trim(),
+        is_active: 1,
+        uploaded_at: new Date().toISOString(),
+        product: "airshield",
+      });
+
+      if (dbError) throw dbError;
+
+      toast.success(`VexShield v${fileVersion.trim()} linked as Active Production build!`);
+      setFileVersion("");
+      setDirectDownloadUrl("");
+      loadAnticheatFiles();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to register release URL");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAdminDownloadTest = async (file: AnticheatFile) => {
+    try {
+      const filePath = String(file.file_path || "").trim();
+      const filename = file.filename || "VexShield.zip";
+      if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+        window.open(filePath, "_blank");
+        toast.success(`Opening ${filename}`);
+        return;
+      }
+      const { data: blob, error } = await supabase.storage.from(RELEASES_BUCKET).download(filePath);
+      if (error || !blob) {
+        window.open(`${apiUrl(`/uploads/anticheat-files/${filePath}`)}`, "_blank");
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      }
+      toast.success(`Downloading ${filename}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to download build");
     }
   };
 
@@ -403,7 +480,9 @@ export default function AdminDashboard() {
   const handleDeleteAnticheatFile = async (file: AnticheatFile) => {
     if (!confirm(`Delete ${file.filename}?`)) return;
     try {
-      await supabase.storage.from(RELEASES_BUCKET).remove([file.file_path]);
+      if (!file.file_path?.startsWith("http")) {
+        await supabase.storage.from(RELEASES_BUCKET).remove([file.file_path]);
+      }
       const { error } = await supabase.from("anticheat_files").delete().eq("id", file.id);
       if (error) throw error;
       toast.success("File deleted");
@@ -883,49 +962,135 @@ export default function AdminDashboard() {
           {/* TAB 1: BUILDS & RELEASES */}
           {activeTab === "builds" && (
             <div className="space-y-6">
-              <div className="rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-                    <Upload className="h-5 w-5" />
+              <div className="rounded-2xl border border-cyan-500/25 bg-cyan-500/5 p-5 md:p-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                      <Upload className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white">Deploy VexShield Production Release</h3>
+                      <p className="text-xs text-slate-400">Newly uploaded builds are immediately linked to customer dashboard downloads.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white">Upload New VexShield Package</h3>
-                    <p className="text-xs text-slate-400">Accepts .zip or .rar up to 250MB. Tied to automatic download on client dashboard.</p>
+
+                  {/* Mode Selector */}
+                  <div className="flex items-center bg-black/60 border border-white/10 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setUploadMode("file")}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                        uploadMode === "file"
+                          ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/25"
+                          : "text-slate-400 hover:text-white"
+                      )}
+                    >
+                      <Upload className="h-3 w-3" />
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUploadMode("url")}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                        uploadMode === "url"
+                          ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/25"
+                          : "text-slate-400 hover:text-white"
+                      )}
+                    >
+                      <Globe className="h-3 w-3" />
+                      Direct URL / CDN
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                  <Input
-                    placeholder="Build Version (e.g. 2.5.0)"
-                    value={fileVersion}
-                    onChange={(e) => setFileVersion(e.target.value)}
-                    className="w-full sm:w-48 bg-black/50 border-white/10 rounded-xl h-10 text-xs text-white"
-                  />
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept=".zip,.rar"
-                      onChange={handleFileUpload}
-                      disabled={uploading}
-                      className="hidden"
-                    />
-                    <div className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold px-4 h-10 flex items-center gap-2 shadow-md shadow-cyan-500/25 transition-all">
-                      <Upload className="h-4 w-4" />
-                      {uploading ? "Deploying..." : "Choose File"}
+                {uploadMode === "file" ? (
+                  <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+                    <div className="text-xs text-slate-400 max-w-md">
+                      Upload the complete FiveM resource folder zipped as <code className="text-cyan-300 font-mono">.zip</code> or <code className="text-cyan-300 font-mono">.rar</code> up to 250MB.
                     </div>
-                  </label>
-                </div>
+
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                      <Input
+                        placeholder="Build Version (e.g. 2.5.0)"
+                        value={fileVersion}
+                        onChange={(e) => setFileVersion(e.target.value)}
+                        className="w-full sm:w-44 bg-black/50 border-white/10 rounded-xl h-10 text-xs text-white"
+                      />
+                      <label className="cursor-pointer w-full sm:w-auto">
+                        <input
+                          type="file"
+                          accept=".zip,.rar"
+                          onChange={handleFileUpload}
+                          disabled={uploading}
+                          className="hidden"
+                        />
+                        <div className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold px-5 h-10 flex items-center justify-center gap-2 shadow-md shadow-cyan-500/25 transition-all">
+                          <Upload className="h-4 w-4" />
+                          {uploading ? "Deploying Package..." : "Choose & Deploy .ZIP"}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                      <div className="sm:col-span-3">
+                        <Label className="text-[11px] text-slate-400 mb-1 block">Version</Label>
+                        <Input
+                          placeholder="e.g. 2.5.0"
+                          value={fileVersion}
+                          onChange={(e) => setFileVersion(e.target.value)}
+                          className="bg-black/50 border-white/10 rounded-xl h-10 text-xs text-white"
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <Label className="text-[11px] text-slate-400 mb-1 block">File Name</Label>
+                        <Input
+                          placeholder="VexShield.zip"
+                          value={directFileName}
+                          onChange={(e) => setDirectFileName(e.target.value)}
+                          className="bg-black/50 border-white/10 rounded-xl h-10 text-xs text-white"
+                        />
+                      </div>
+                      <div className="sm:col-span-6">
+                        <Label className="text-[11px] text-slate-400 mb-1 block">Direct Download Link (CDN / GitHub Releases)</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="https://.../VexShield.zip"
+                            value={directDownloadUrl}
+                            onChange={(e) => setDirectDownloadUrl(e.target.value)}
+                            className="bg-black/50 border-white/10 rounded-xl h-10 text-xs text-white"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleRegisterUrlBuild}
+                            disabled={uploading}
+                            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold px-4 h-10 shrink-0 rounded-xl shadow-md shadow-cyan-500/25"
+                          >
+                            <LinkIcon className="h-4 w-4 mr-1.5" />
+                            {uploading ? "Saving..." : "Deploy"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Releases List */}
               <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-                  Active VexShield Distributions
-                </h3>
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Active VexShield Distributions ({anticheatFiles.length})
+                  </h3>
+                  <span className="text-[11px] text-slate-500">Live for customers on /download</span>
+                </div>
 
                 {anticheatFiles.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-slate-500 text-xs">
-                    No release packages uploaded yet. Deploy your first VexShield package above.
+                  <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500 text-xs">
+                    No release packages deployed yet. Deploy your first VexShield package above.
                   </div>
                 ) : (
                   <div className="space-y-2.5">
@@ -938,7 +1103,7 @@ export default function AdminDashboard() {
                             "rounded-xl border p-4 flex flex-wrap items-center justify-between gap-4 transition-all",
                             active
                               ? "border-emerald-500/40 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
-                              : "border-white/10 bg-[#07101c]/70"
+                              : "border-white/10 bg-[#07101c]/70 hover:bg-[#07101c]"
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -958,17 +1123,31 @@ export default function AdminDashboard() {
                                 </Badge>
                                 {active && (
                                   <Badge className="bg-emerald-500/25 text-emerald-300 border-emerald-500/40 text-[10px] font-bold shadow-[0_0_10px_rgba(16,185,129,0.3)]">
-                                    ACTIVE BUILD
+                                    ACTIVE PRODUCTION
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-400 mt-1">
+                              <p className="text-xs text-slate-400 mt-1 truncate max-w-md">
                                 {formatFileSize(file.file_size)} · Released {new Date(file.uploaded_at).toLocaleDateString()}
+                                {file.file_path?.startsWith("http") && (
+                                  <span className="ml-2 text-cyan-400/80">· Remote CDN</span>
+                                )}
                               </p>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 rounded-xl text-xs font-bold border-white/10 bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08]"
+                              onClick={() => handleAdminDownloadTest(file)}
+                              title="Test Download Package"
+                            >
+                              <Download className="h-3.5 w-3.5 mr-1 text-cyan-400" />
+                              Test Download
+                            </Button>
+
                             <Button
                               size="sm"
                               variant={active ? "default" : "outline"}
@@ -980,8 +1159,9 @@ export default function AdminDashboard() {
                               )}
                               onClick={() => handleToggleAnticheatActive(file.id, file.is_active)}
                             >
-                              {active ? "Active" : "Activate"}
+                              {active ? "Active" : "Set Active"}
                             </Button>
+
                             <Button
                               size="sm"
                               variant="ghost"

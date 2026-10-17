@@ -289,9 +289,17 @@ export default function ServerLayout() {
                       />
                       <Route path="/server-panel" element={<Navigate to="dashboard" replace />} />
                       <Route
+                        path="download"
+                        element={
+                          <RequirePageAccess page="dashboard">
+                            <Pages.DownloadPage />
+                          </RequirePageAccess>
+                        }
+                      />
+                      <Route
                         path="/download"
                         element={
-                          <RequirePageAccess page="dashboard" licenseOwnerOnly>
+                          <RequirePageAccess page="dashboard">
                             <Pages.DownloadPage />
                           </RequirePageAccess>
                         }

@@ -109,6 +109,7 @@ interface MenuItem {
 
 const dashboardItems = (baseUrl: string): MenuItem[] => [
   { titleKey: "sidebar.dashboard", url: `${baseUrl}/dashboard`, icon: AnimatedLayoutGrid as unknown as AnimatedIcon, permission: "dashboard" },
+  { titleKey: "sidebar.download", url: `${baseUrl}/download`, icon: Download as unknown as AnimatedIcon, permission: "dashboard" },
   { titleKey: "sidebar.models", url: `${baseUrl}/models`, icon: AnimatedPackage as unknown as AnimatedIcon, permission: "settings" },
 ];
 
@@ -163,6 +164,7 @@ export function AppSidebar() {
 
   const customerAreaItems: MenuItem[] = [
     { titleKey: "sidebar.dashboard", url: "/my-servers", icon: AnimatedLayoutGrid as unknown as AnimatedIcon, permission: "dashboard" },
+    { titleKey: "sidebar.download", url: "/download", icon: Download as unknown as AnimatedIcon, permission: "dashboard" },
     { titleKey: "sidebar.profile", url: "/profile-settings", icon: UserRound as unknown as AnimatedIcon, permission: "dashboard" },
     { titleKey: "sidebar.redeem", url: "#redeem", icon: Key as unknown as AnimatedIcon, permission: "dashboard" },
     { titleKey: "sidebar.configLibrary", url: "/configs-library", icon: AnimatedFolder as unknown as AnimatedIcon, permission: "settings" },
@@ -189,6 +191,7 @@ export function AppSidebar() {
     if (isMyServersPage) {
       if (path === "#redeem") return false;
       if (path === "/my-servers") return currentPath === "/my-servers" || currentPath === "/servers";
+      if (path === "/download") return currentPath === "/download";
       if (path === "/profile-settings") return currentPath === "/profile-settings";
       if (path === "/configs-library") return currentPath === "/configs-library" || currentPath === "/library";
       if (path === "/models") return currentPath === "/models";
