@@ -120,7 +120,8 @@ async function fetchUserServers(db, userId, userEmail) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
 
-  const view = req.query?.view;
+  const urlObj = new URL(req.url || '/', 'https://vexshield.site');
+  const view = req.query?.view || urlObj.searchParams.get('view') || (urlObj.pathname.includes('/license') ? 'redeem_license' : null);
 
   // View: Stats (Public Telemetry)
   if (view === 'stats') {
@@ -179,7 +180,18 @@ export default async function handler(req, res) {
     }
 
     let body = req.body;
-    if (typeof body === 'string') {
+    if (!body && typeof req.on === 'function') {
+      try {
+        const buffers = [];
+        for await (const chunk of req) {
+          buffers.push(chunk);
+        }
+        const text = Buffer.concat(buffers).toString('utf8');
+        body = JSON.parse(text);
+      } catch (_) {
+        body = {};
+      }
+    } else if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch (_) { body = {}; }
     }
     body = body || {};
