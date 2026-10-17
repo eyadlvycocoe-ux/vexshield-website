@@ -115,6 +115,35 @@ export default async function handler(req, res) {
   }
   body = body || {};
 
+  const route = String(req.query.route || '').toLowerCase();
+  if (route === 'server-command') {
+    const server_identifier = body.server_id || body.server_ip;
+    const command_type = body.command_type;
+    const command_data = body.command_data || {};
+    if (!server_identifier) {
+      return res.status(400).json({ error: 'Missing server_id or server_ip' });
+    }
+    try {
+      const [servers] = await db.query(
+        'SELECT server_id, server_ip, license_key FROM servers WHERE server_id = ? OR id = ? OR server_ip = ? LIMIT 1',
+        [server_identifier, server_identifier, server_identifier]
+      );
+      if (!servers || servers.length === 0) {
+        return res.status(404).json({ error: 'Server not found' });
+      }
+      const resolvedServerId = servers[0].server_id;
+      const commandId = randomUUID();
+      await db.query(
+        `INSERT INTO dashboard_commands (id, server_id, command_type, command_data, status, created_at)
+         VALUES (?, ?, ?, ?, 'pending', NOW())`,
+        [commandId, resolvedServerId, command_type, JSON.stringify(command_data)]
+      );
+      return res.status(200).json({ success: true, message: 'Command queued successfully', command_id: commandId });
+    } catch (cmdErr) {
+      return res.status(500).json({ error: cmdErr.message || 'Internal error' });
+    }
+  }
+
   try {
     const resolved = await resolveServer(db, body);
     if (resolved.error) {

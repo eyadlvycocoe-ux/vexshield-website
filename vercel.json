@@ -21,7 +21,7 @@
     },
     {
       "source": "/api/functions/server-command",
-      "destination": "/api/server-command.js"
+      "destination": "/api/report.js?route=server-command"
     },
     {
       "source": "/api/public/global-blacklist.json",
