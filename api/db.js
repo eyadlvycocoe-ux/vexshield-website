@@ -2,6 +2,7 @@ import mysql from 'mysql2/promise';
 import { randomUUID } from 'crypto';
 
 let pool = null;
+
 function getPool() {
   if (!pool) {
     pool = mysql.createPool({
@@ -13,12 +14,55 @@ function getPool() {
       ssl: { rejectUnauthorized: false },
       waitForConnections: true,
       connectionLimit: 1,
-      maxIdle: 0,
-      idleTimeout: 3000,
-      queueLimit: 0,
+      connectTimeout: 7000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
     });
   }
   return pool;
+}
+
+// In-memory microcache (TTL: 4s) for high-frequency reads
+const memoryCache = new Map();
+const CACHE_TTL_MS = 4000;
+
+function getCached(key) {
+  const item = memoryCache.get(key);
+  if (item && Date.now() < item.exp) {
+    return item.data;
+  }
+  if (item) memoryCache.delete(key);
+  return null;
+}
+
+function setCached(key, data) {
+  if (memoryCache.size > 800) {
+    memoryCache.clear();
+  }
+  memoryCache.set(key, { data, exp: Date.now() + CACHE_TTL_MS });
+}
+
+function clearCache() {
+  memoryCache.clear();
+}
+
+/** Robust query executor with auto-retry for transient connection hiccups / pool saturation */
+async function executeQueryWithRetry(db, sql, params = [], retries = 2) {
+  try {
+    return await db.query(sql, params);
+  } catch (err) {
+    const isConnErr =
+      err.message?.includes('Too many connections') ||
+      err.message?.includes('ECONNRESET') ||
+      err.code === 'PROTOCOL_CONNECTION_LOST' ||
+      err.code === 'ER_CON_COUNT_ERROR';
+
+    if (retries > 0 && isConnErr) {
+      await new Promise(r => setTimeout(r, 200 * (3 - retries)));
+      return executeQueryWithRetry(db, sql, params, retries - 1);
+    }
+    throw err;
+  }
 }
 
 const ALLOWED_TABLES = new Set([
@@ -46,7 +90,8 @@ const ALLOWED_TABLES = new Set([
   'blacklisted_discord_servers',
   'consoles',
   'dashboard_commands',
-  'reports'
+  'reports',
+  'dashboard_summary'
 ]);
 
 function isValidIdentifier(val) {
@@ -57,7 +102,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-csrf-token, *');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -76,10 +120,65 @@ export default async function handler(req, res) {
   const db = getPool();
 
   // ---------------------------------------------------------
-  // GET: Read data with filtering, sorting, pagination & counting
+  // GET: Fast Read with Edge CDN & In-Memory Microcache
   // ---------------------------------------------------------
   if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'public, s-maxage=2, stale-while-revalidate=8');
+
+    const cacheKey = req.url || `${table}:${JSON.stringify(req.query)}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     try {
+      // -------------------------------------------------------
+      // Special Accelerated Consolidated Dashboard Summary
+      // -------------------------------------------------------
+      if (table.toLowerCase() === 'dashboard_summary') {
+        const sid = String(req.query.server_id || req.query.sid || '').trim();
+        if (!sid) {
+          return res.status(400).json({ error: 'server_id required for dashboard_summary' });
+        }
+
+        const [
+          [serverRows],
+          [snapshotRows],
+          [settingsRows],
+          [acRows],
+          [[bansCountRow]],
+          [[kicksCountRow]],
+          [[warnsCountRow]],
+          [recentBansRows],
+          [recentKicksRows]
+        ] = await Promise.all([
+          executeQueryWithRetry(db, 'SELECT * FROM `servers` WHERE `server_id` = ? AND `soft_deleted_at` IS NULL LIMIT 1', [sid]),
+          executeQueryWithRetry(db, 'SELECT * FROM `players_snapshots` WHERE `server_id` = ? LIMIT 1', [sid]),
+          executeQueryWithRetry(db, 'SELECT `settings` FROM `server_settings` WHERE `server_id` = ? LIMIT 1', [sid]),
+          executeQueryWithRetry(db, 'SELECT `version`, `is_active` FROM `anticheat_files` ORDER BY `uploaded_at` DESC LIMIT 5'),
+          executeQueryWithRetry(db, 'SELECT COUNT(*) as count FROM `bans` WHERE `server_id` = ?', [sid]),
+          executeQueryWithRetry(db, 'SELECT COUNT(*) as count FROM `kicks` WHERE `server_id` = ?', [sid]),
+          executeQueryWithRetry(db, 'SELECT COUNT(*) as count FROM `warns` WHERE `server_id` = ?', [sid]),
+          executeQueryWithRetry(db, 'SELECT `player_name`, `reason`, `created_at` FROM `bans` WHERE `server_id` = ? ORDER BY `created_at` DESC LIMIT 150', [sid]),
+          executeQueryWithRetry(db, 'SELECT `player_name`, `reason`, `created_at` FROM `kicks` WHERE `server_id` = ? ORDER BY `created_at` DESC LIMIT 2', [sid]),
+        ]);
+
+        const summaryResult = {
+          server: serverRows?.[0] || null,
+          snapshot: snapshotRows?.[0] || null,
+          settings: settingsRows?.[0]?.settings || null,
+          anticheat: acRows?.find(r => r.is_active)?.version || acRows?.[0]?.version || 'vBeta',
+          bansCount: Number(bansCountRow?.count || 0),
+          kicksCount: Number(kicksCountRow?.count || 0),
+          warnsCount: Number(warnsCountRow?.count || 0),
+          recentBans: recentBansRows || [],
+          recentKicks: recentKicksRows || [],
+        };
+
+        setCached(cacheKey, summaryResult);
+        return res.status(200).json(summaryResult);
+      }
+
       const isCountHead = req.query.count === 'exact' && (req.query.head === 'true' || req.query.head === true);
       const limit = parseInt(req.query.limit, 10) || (isCountHead ? 1 : 100);
       const offset = parseInt(req.query.offset, 10) || 0;
@@ -124,11 +223,14 @@ export default async function handler(req, res) {
       const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
       if (isCountHead) {
-        const [[countRow]] = await db.query(
+        const [[countRow]] = await executeQueryWithRetry(
+          db,
           `SELECT COUNT(*) as count FROM \`${table}\` ${whereSql}`,
           params
         );
-        return res.status(200).json({ count: Number(countRow?.count || 0) });
+        const countRes = { count: Number(countRow?.count || 0) };
+        setCached(cacheKey, countRes);
+        return res.status(200).json(countRes);
       }
 
       let orderSql = '';
@@ -143,13 +245,18 @@ export default async function handler(req, res) {
       const querySql = `SELECT ${selectStr} FROM \`${table}\` ${whereSql} ${orderSql} LIMIT ? OFFSET ?`;
       const queryParams = [...params, limit, offset];
 
-      const [rows] = await db.query(querySql, queryParams);
+      const [rows] = await executeQueryWithRetry(db, querySql, queryParams);
+      setCached(cacheKey, rows);
       return res.status(200).json(rows);
     } catch (err) {
       console.error(`DB query error on ${table}:`, err);
       return res.status(500).json({ error: err.message || 'Database error' });
     }
   }
+
+  // Mutations invalidate caches and must not be cached by Edge
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  clearCache();
 
   // Parse JSON body for mutations
   let body = req.body;
@@ -198,19 +305,21 @@ export default async function handler(req, res) {
                      VALUES (${placeholders})
                      ON DUPLICATE KEY UPDATE ${updateClause}`;
 
-        await db.query(sql, values);
+        await executeQueryWithRetry(db, sql, values);
         results.push(row);
 
         // If settings were updated, queue a live update command for FiveM
         if (table === 'server_settings' && row.server_id) {
           try {
             const sid = String(row.server_id).trim();
-            const [pending] = await db.query(
+            const [pending] = await executeQueryWithRetry(
+              db,
               "SELECT id FROM dashboard_commands WHERE server_id = ? AND command_type = 'update_settings' AND status = 'pending' LIMIT 1",
               [sid]
             );
             if (!pending || pending.length === 0) {
-              await db.query(
+              await executeQueryWithRetry(
+                db,
                 "INSERT INTO dashboard_commands (id, server_id, command_type, command_data, status) VALUES (?, ?, 'update_settings', ?, 'pending')",
                 [randomUUID(), sid, JSON.stringify({ fetch_settings: true })]
               );
@@ -275,7 +384,7 @@ export default async function handler(req, res) {
           const sql = `INSERT INTO \`${table}\` (${keys.map(k => `\`${k}\``).join(', ')})
                        VALUES (${placeholders})
                        ON DUPLICATE KEY UPDATE ${updateClause}`;
-          await db.query(sql, values);
+          await executeQueryWithRetry(db, sql, values);
           return res.status(200).json(row);
         }
       }
@@ -302,18 +411,20 @@ export default async function handler(req, res) {
       const updateValues = [...updateKeys.map(k => updateData[k]), whereVal];
 
       const sql = `UPDATE \`${table}\` SET ${setClause} WHERE \`${whereCol}\` = ?`;
-      const [result] = await db.query(sql, updateValues);
+      const [result] = await executeQueryWithRetry(db, sql, updateValues);
 
       // If server_settings or servers table was updated, queue live reload
       if ((table === 'server_settings' || table === 'servers') && whereCol === 'server_id') {
         try {
           const sid = String(whereVal).trim();
-          const [pending] = await db.query(
+          const [pending] = await executeQueryWithRetry(
+            db,
             "SELECT id FROM dashboard_commands WHERE server_id = ? AND command_type = 'update_settings' AND status = 'pending' LIMIT 1",
             [sid]
           );
           if (!pending || pending.length === 0) {
-            await db.query(
+            await executeQueryWithRetry(
+              db,
               "INSERT INTO dashboard_commands (id, server_id, command_type, command_data, status) VALUES (?, ?, 'update_settings', ?, 'pending')",
               [randomUUID(), sid, JSON.stringify({ fetch_settings: true })]
             );
@@ -329,7 +440,7 @@ export default async function handler(req, res) {
   }
 
   // ---------------------------------------------------------
-  // DELETE: Delete records with filter
+  // DELETE: Delete records with filter & Cascading Cleanup
   // ---------------------------------------------------------
   if (req.method === 'DELETE') {
     try {
@@ -352,7 +463,8 @@ export default async function handler(req, res) {
       // If deleting a server, cascade delete all child references first to avoid FK constraint failures
       if (table === 'servers') {
         try {
-          const [targetRows] = await db.query(
+          const [targetRows] = await executeQueryWithRetry(
+            db,
             `SELECT id, server_id FROM servers WHERE \`${whereCol}\` = ? OR id = ? OR server_id = ? LIMIT 1`,
             [whereVal, whereVal, whereVal]
           );
@@ -375,10 +487,10 @@ export default async function handler(req, res) {
             ];
             for (const ct of childTables) {
               try {
-                if (sid) await db.query(`DELETE FROM \`${ct}\` WHERE server_id = ?`, [sid]);
+                if (sid) await executeQueryWithRetry(db, `DELETE FROM \`${ct}\` WHERE server_id = ?`, [sid]);
               } catch (_) {}
             }
-            const [delRes] = await db.query('DELETE FROM servers WHERE id = ? OR server_id = ?', [targetId || whereVal, sid || whereVal]);
+            const [delRes] = await executeQueryWithRetry(db, 'DELETE FROM servers WHERE id = ? OR server_id = ?', [targetId || whereVal, sid || whereVal]);
             return res.status(200).json({ success: true, deleted: delRes.affectedRows });
           }
         } catch (serverDelErr) {
@@ -387,7 +499,7 @@ export default async function handler(req, res) {
       }
 
       const sql = `DELETE FROM \`${table}\` WHERE \`${whereCol}\` = ?`;
-      const [result] = await db.query(sql, [whereVal]);
+      const [result] = await executeQueryWithRetry(db, sql, [whereVal]);
 
       return res.status(200).json({ success: true, deleted: result.affectedRows });
     } catch (err) {

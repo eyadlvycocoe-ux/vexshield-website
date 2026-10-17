@@ -357,22 +357,14 @@ export default function ServerDashboard() {
           setLoading(false);
         }
 
-        const [snapshotRes, settingsRes, activeAcRes, latestAcRes] = await Promise.all([
+        const [snapshotRes, settingsRes, acFilesRes] = await Promise.all([
           supabase.from("players_snapshots").select("*").eq("server_id", serverId).maybeSingle(),
           supabase.from("server_settings").select("settings").eq("server_id", serverId).maybeSingle(),
           supabase
             .from("anticheat_files")
-            .select("version")
-            .eq("is_active", true)
+            .select("version, is_active")
             .order("uploaded_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-          supabase
-            .from("anticheat_files")
-            .select("version")
-            .order("uploaded_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+            .limit(5),
         ]);
 
         const snapshotData = snapshotRes.data;
@@ -387,7 +379,8 @@ export default function ServerDashboard() {
           if (logoVal && typeof logoVal === "string") setServerSettingsLogo(logoVal);
         }
 
-        const activeAc = activeAcRes.data?.version ? activeAcRes.data : latestAcRes.data;
+        const acList = Array.isArray(acFilesRes.data) ? acFilesRes.data : [];
+        const activeAc = acList.find((f: any) => f.is_active) || acList[0];
         setLatestAcVersion(activeAc?.version?.trim() || null);
         const installedVersion =
           (snapshotData?.metadata as { version?: string; ac_version?: string } | null)?.version?.trim() ||
@@ -401,17 +394,15 @@ export default function ServerDashboard() {
         setChartData(activity);
 
         const [
-          bansWithReasonRes,
+          bansRes,
           banCountRes,
           kickCountRes,
           warnCountRes,
-          recentBansRes,
           recentKicksRes,
-          recentBansRawRes,
         ] = await Promise.all([
           supabase
             .from("bans")
-            .select("reason")
+            .select("player_name, reason, created_at")
             .eq("server_id", serverId)
             .order("created_at", { ascending: false })
             .limit(150),
@@ -419,28 +410,16 @@ export default function ServerDashboard() {
           supabase.from("kicks").select("*", { count: "exact", head: true }).eq("server_id", serverId),
           supabase.from("warns").select("*", { count: "exact", head: true }).eq("server_id", serverId),
           supabase
-            .from("bans")
-            .select("player_name, reason, created_at")
-            .eq("server_id", serverId)
-            .order("created_at", { ascending: false })
-            .limit(2),
-          supabase
             .from("kicks")
             .select("player_name, reason, created_at")
             .eq("server_id", serverId)
             .order("created_at", { ascending: false })
             .limit(2),
-          supabase
-            .from("bans")
-            .select("created_at")
-            .eq("server_id", serverId)
-            .order("created_at", { ascending: false })
-            .limit(100),
         ]);
 
-        const bansWithReason = bansWithReasonRes.data;
+        const bansList = Array.isArray(bansRes.data) ? bansRes.data : [];
         const reasonCounts = new Map<string, number>();
-        bansWithReason?.forEach((ban) => {
+        bansList.forEach((ban: any) => {
           const raw = (ban.reason || "Unknown detection").trim();
           const label = raw.length > 32 ? `${raw.slice(0, 32)}` : raw;
           reasonCounts.set(label, (reasonCounts.get(label) || 0) + 1);
@@ -461,7 +440,7 @@ export default function ServerDashboard() {
         setStats(nextStats);
 
         const actions: RecentAction[] = [];
-        recentBansRes.data?.forEach((ban) => {
+        bansList.slice(0, 2).forEach((ban: any) => {
           actions.push({
             type: "ban",
             player: ban.player_name || "Unknown",
@@ -469,7 +448,7 @@ export default function ServerDashboard() {
             time: formatTimeAgo(new Date(ban.created_at || Date.now())),
           });
         });
-        recentKicksRes.data?.forEach((kick) => {
+        (recentKicksRes.data as any[])?.forEach((kick) => {
           actions.push({
             type: "kick",
             player: kick.player_name || "Unknown",
@@ -480,8 +459,8 @@ export default function ServerDashboard() {
         setRecentActions(actions.slice(0, 4));
 
         const sinceMs = Date.now() - 24 * 60 * 60 * 1000;
-        const bans24h = (recentBansRawRes.data || []).filter(
-          (b) => b?.created_at && new Date(b.created_at).getTime() >= sinceMs,
+        const bans24h = bansList.filter(
+          (b: any) => b?.created_at && new Date(b.created_at).getTime() >= sinceMs,
         );
         setAnalyticsSeries(buildAnalyticsSeries(activity, bucketBansByHour(bans24h || [])));
 

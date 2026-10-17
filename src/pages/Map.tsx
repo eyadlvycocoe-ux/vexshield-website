@@ -183,8 +183,7 @@ export default function Map() {
 
       if (error) {
         if (error instanceof Error && error.name === "AbortError") return;
-        console.error("Error loading players:", error);
-        toast.error("Failed to fetch players");
+        console.warn("Could not refresh map players snapshot:", error);
         return;
       }
 

@@ -71,6 +71,14 @@ async function fetchAuthSessionCached(desktopToken?: string | null): Promise<Aut
   return payload;
 }
 
+const clientInflightRequests = new Map<string, Promise<any>>();
+const clientRequestCache = new Map<string, { data: any; exp: number }>();
+
+export function clearClientRequestCache() {
+  clientRequestCache.clear();
+  clientInflightRequests.clear();
+}
+
 class QueryBuilder {
   private table: string;
   private selectCols: string = '*';
@@ -86,7 +94,7 @@ class QueryBuilder {
     this.table = table;
   }
 
-  private async fetchApi(
+  private async executeFetch(
     path: string,
     options: RequestInit = {},
     csrfRetried = false,
@@ -108,7 +116,7 @@ class QueryBuilder {
     const response = await fetchWithTimeout(`${getApiBaseUrl()}${path}`, {
       ...options,
       credentials: 'include',
-      cache: 'no-store',
+      cache: 'default',
       headers: {
         ...apiMutationHeaders(),
         ...Object.fromEntries(headers.entries()),
@@ -139,7 +147,7 @@ class QueryBuilder {
         method !== 'HEAD'
       ) {
         await ensureCsrfCookie(true);
-        return this.fetchApi(path, options, true, rateLimitAttempt, gatewayAttempt);
+        return this.executeFetch(path, options, true, rateLimitAttempt, gatewayAttempt);
       }
       if (
         (response.status === 429 || response.status === 502 || response.status === 503 || response.status === 504) &&
@@ -151,7 +159,7 @@ class QueryBuilder {
             ? parseRetryAfterMs(response) || 400 * 2 ** rateLimitAttempt
             : 500 * (gatewayAttempt + 1);
         await new Promise((r) => setTimeout(r, retryAfterMs));
-        return this.fetchApi(
+        return this.executeFetch(
           path,
           options,
           csrfRetried,
@@ -173,6 +181,43 @@ class QueryBuilder {
       throw new Error(`API returned invalid JSON: ${preview}`);
     }
     return data;
+  }
+
+  private async fetchApi(
+    path: string,
+    options: RequestInit = {},
+    csrfRetried = false,
+    rateLimitAttempt = 0,
+    gatewayAttempt = 0,
+  ) {
+    const method = String(options.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      clearClientRequestCache();
+      return this.executeFetch(path, options, csrfRetried, rateLimitAttempt, gatewayAttempt);
+    }
+
+    const cacheKey = `${getApiBaseUrl()}${path}`;
+    const cached = clientRequestCache.get(cacheKey);
+    if (cached && Date.now() < cached.exp) {
+      return cached.data;
+    }
+
+    if (clientInflightRequests.has(cacheKey)) {
+      return await clientInflightRequests.get(cacheKey);
+    }
+
+    const reqPromise = (async () => {
+      try {
+        const data = await this.executeFetch(path, options, csrfRetried, rateLimitAttempt, gatewayAttempt);
+        clientRequestCache.set(cacheKey, { data, exp: Date.now() + 2500 });
+        return data;
+      } finally {
+        clientInflightRequests.delete(cacheKey);
+      }
+    })();
+
+    clientInflightRequests.set(cacheKey, reqPromise);
+    return await reqPromise;
   }
 
   select(columns: string = '*', options?: { count?: 'exact'; head?: boolean }) {
